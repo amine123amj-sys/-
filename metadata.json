@@ -1,0 +1,8 @@
+{
+  "name": "NeL",
+  "description": "An Instagram-styled web application focused on random chatting functionality, powered by AI to simulate the chat experience.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera"
+  ]
+}
