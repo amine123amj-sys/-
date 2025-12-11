@@ -1,9 +1,54 @@
 import React, { useState } from 'react';
 import BottomNav from './components/BottomNav';
 import ChatWindow from './components/ChatWindow';
-import { Tab, ChatMode } from './types';
+import StoryRail from './components/StoryRail';
+import CreateVideo from './components/CreateVideo';
+import ReelsView from './components/ReelsView';
+import { Tab, ChatMode, Reel, Story } from './types';
 import { STRINGS } from './constants';
-import { Tags, Video, MessageSquareText, X, ArrowRight } from 'lucide-react';
+import { Tags, Video, MessageSquareText, X, ArrowRight, Clapperboard, PlusSquare, Search, User, MessageCircle } from 'lucide-react';
+
+const DUMMY_REELS: Reel[] = [
+  {
+    id: '1',
+    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-waves-in-the-water-1164-large.mp4',
+    username: 'بحر_الهدوء',
+    userAvatar: 'https://picsum.photos/100/100?random=10',
+    description: 'يوم جميل على الشاطئ 🌊 #صيف',
+    likes: 1240,
+    comments: 45,
+    shares: 12
+  },
+  {
+    id: '2',
+    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-tree-with-yellow-flowers-1173-large.mp4',
+    username: 'طبيعة_ساحرة',
+    userAvatar: 'https://picsum.photos/100/100?random=11',
+    description: 'جمال الربيع 🌸',
+    likes: 850,
+    comments: 20,
+    shares: 5,
+    isBoosted: true
+  },
+  {
+    id: '3',
+    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-cheering-crowd-loud-at-a-concert-460-large.mp4',
+    username: 'موسيقى_لايف',
+    userAvatar: 'https://picsum.photos/100/100?random=12',
+    description: 'أجواء الحفلة لا توصف! 🔥🎸',
+    likes: 5600,
+    comments: 300,
+    shares: 450
+  }
+];
+
+const DUMMY_STORIES: Story[] = [
+  { id: 101, name: 'قصتي', img: 'https://picsum.photos/100/100?random=me', isUser: true },
+  { id: 102, name: 'أحمد', img: 'https://picsum.photos/100/100?random=2', isUser: false },
+  { id: 103, name: 'سارة', img: 'https://picsum.photos/100/100?random=3', isUser: false },
+  { id: 104, name: 'علي', img: 'https://picsum.photos/100/100?random=4', isUser: false },
+  { id: 105, name: 'نور', img: 'https://picsum.photos/100/100?random=5', isUser: false },
+];
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('home');
@@ -11,6 +56,10 @@ const App: React.FC = () => {
   const [interests, setInterests] = useState<string[]>([]);
   const [currentInterestInput, setCurrentInterestInput] = useState('');
   const [chatMode, setChatMode] = useState<ChatMode>('text');
+  
+  // Data State
+  const [reels, setReels] = useState<Reel[]>(DUMMY_REELS);
+  const [stories, setStories] = useState<Story[]>(DUMMY_STORIES);
 
   const addInterest = () => {
     if (currentInterestInput.trim() && !interests.includes(currentInterestInput.trim())) {
@@ -32,6 +81,22 @@ const App: React.FC = () => {
   const startChat = (mode: ChatMode) => {
       setChatMode(mode);
       setIsInChat(true);
+  };
+
+  const handlePublishReel = (newReel: Reel) => {
+      setReels(prev => [newReel, ...prev]);
+      setActiveTab('reels');
+  };
+
+  const handlePublishStory = (newStory: Story) => {
+      // Logic: Update the user's story or add it if not exists. 
+      // For this demo, we assume the first item is the user placeholder and we update it/add to it.
+      // But simplest visualization is just ensuring "My Story" is active or adding next to it.
+      // Let's just update the first item to indicate active story
+      const updatedStories = [...stories];
+      updatedStories[0] = { ...updatedStories[0], ...newStory, isUser: true };
+      setStories(updatedStories);
+      setActiveTab('home');
   };
 
   const renderContent = () => {
@@ -131,27 +196,54 @@ const App: React.FC = () => {
 
           </div>
         );
-      case 'explore':
-        return <div className="flex items-center justify-center h-full text-gray-500 font-light">Explore Feature Coming Soon</div>;
-      case 'create':
-        return <div className="flex items-center justify-center h-full text-gray-500 font-light">Create Feature Coming Soon</div>;
       case 'reels':
-        return <div className="flex items-center justify-center h-full text-gray-500 font-light">Reels Feature Coming Soon</div>;
+        return <ReelsView reels={reels} />;
+      case 'create':
+        return <CreateVideo onClose={() => setActiveTab('home')} onPublishReel={handlePublishReel} onPublishStory={handlePublishStory} />;
+      case 'explore': // This is essentially the "Inbox" logic now based on icons
+        return (
+          <div className="flex flex-col h-full bg-black">
+              <div className="p-4 border-b border-gray-800 flex justify-between items-center">
+                  <h2 className="text-xl font-bold">الرسائل</h2>
+                  <MessageCircle className="w-6 h-6" />
+              </div>
+              <StoryRail stories={stories} />
+              <div className="flex-1 overflow-y-auto">
+                 {[1,2,3,4,5].map(i => (
+                     <div key={i} className="flex items-center gap-3 p-4 hover:bg-gray-900 cursor-pointer">
+                        <img src={`https://picsum.photos/50/50?random=${i}`} className="w-12 h-12 rounded-full" />
+                        <div className="flex-1">
+                            <h4 className="font-semibold text-sm">مستخدم {i}</h4>
+                            <p className="text-xs text-gray-400">مرحبا، هل أنت موجود؟</p>
+                        </div>
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                     </div>
+                 ))}
+              </div>
+          </div>
+        );
       case 'profile':
-        return <div className="flex items-center justify-center h-full text-gray-500 font-light">Profile Feature Coming Soon</div>;
+        return (
+          <div className="flex flex-col items-center justify-center h-full text-gray-500 font-light space-y-4">
+              <User className="w-16 h-16 opacity-50" />
+              <p className="text-xl">الملف الشخصي</p>
+              <p className="text-sm opacity-60">تعديل بياناتك</p>
+          </div>
+        );
       default:
         return null;
     }
   };
 
   return (
-    <div className="min-h-screen bg-black text-white font-sans mx-auto max-w-md md:max-w-md md:border-x md:border-ig-darkSec shadow-2xl relative overflow-hidden">
-      
-      <main className="h-full h-screen w-full">
-        {renderContent()}
-      </main>
-
-      {!isInChat && <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />}
+    <div className="min-h-screen bg-black text-white font-sans mx-auto max-w-md md:max-w-full h-screen flex flex-col relative overflow-hidden">
+        <div className="flex-1 overflow-hidden relative">
+            {renderContent()}
+        </div>
+        {/* Hide Bottom Nav when in Chat or Create Mode */}
+        {!isInChat && activeTab !== 'create' && (
+            <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+        )}
     </div>
   );
 };

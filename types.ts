@@ -21,3 +21,28 @@ export interface UserProfile {
 }
 
 export type Tab = 'home' | 'explore' | 'create' | 'reels' | 'profile';
+
+export interface Story {
+  id: string | number;
+  name: string;
+  img: string;
+  isUser: boolean;
+  videoUrl?: string; // Optional if it's a video story
+}
+
+export interface Reel {
+  id: string;
+  videoUrl: string;
+  username: string;
+  userAvatar: string;
+  description: string;
+  likes: number;
+  comments: number;
+  shares: number;
+  isBoosted?: boolean;
+  boostConfig?: {
+    budget: string;
+    duration: string;
+    target: string;
+  };
+}

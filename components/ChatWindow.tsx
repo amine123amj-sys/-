@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, ArrowRight, Square, RotateCw, AlertCircle, Video as VideoIcon, Mic, MicOff, Camera, CameraOff } from 'lucide-react';
 import { ChatState, Message, ChatMode } from '../types';
-import { startNewChatSession, sendMessageToAI } from '../services/geminiService';
+import { realtimeService } from '../services/realtimeService';
 import { STRINGS } from '../constants';
 
 interface ChatWindowProps {
@@ -20,6 +20,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
   // Video Controls
   const [isMicOn, setIsMicOn] = useState(true);
   const [isCamOn, setIsCamOn] = useState(true);
+  const [cameraError, setCameraError] = useState<boolean>(false);
   const localVideoRef = useRef<HTMLVideoElement>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -35,30 +36,51 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
   // Initial auto-start
   useEffect(() => {
     handleStartChat();
+    return () => {
+        realtimeService.disconnect();
+    };
   }, []);
 
-  // Camera handling for Video Mode
+  // Camera handling for Video Mode with ERROR FIX
   useEffect(() => {
     let stream: MediaStream | null = null;
     
     const startCamera = async () => {
+        setCameraError(false);
         try {
+            // Try to get both video and audio
             stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             if (localVideoRef.current) {
                 localVideoRef.current.srcObject = stream;
             }
+            setIsCamOn(true);
         } catch (err) {
             console.error("Error accessing camera:", err);
-            // Fallback or error handling could go here
+            setCameraError(true);
+            setIsCamOn(false);
+            
+            // Fallback: Try audio only if video failed
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                // We got audio at least
+            } catch (audioErr) {
+                console.error("Error accessing audio:", audioErr);
+                setIsMicOn(false);
+            }
         }
     };
 
-    if (mode === 'video' && chatState !== ChatState.SEARCHING && isCamOn) {
-        startCamera();
-    } else if (!isCamOn && localVideoRef.current) {
-        const src = localVideoRef.current.srcObject as MediaStream;
-        if (src) src.getTracks().forEach(t => t.stop());
-        localVideoRef.current.srcObject = null;
+    if (mode === 'video' && chatState !== ChatState.SEARCHING) {
+        if (isCamOn && !cameraError) {
+             startCamera();
+        } else {
+            // Stop tracks if camera is turned off by user
+            if (localVideoRef.current && localVideoRef.current.srcObject) {
+                const src = localVideoRef.current.srcObject as MediaStream;
+                src.getTracks().forEach(t => t.stop());
+                localVideoRef.current.srcObject = null;
+            }
+        }
     }
 
     return () => {
@@ -72,40 +94,38 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
     };
   }, [mode, chatState, isCamOn]);
 
-  const handleStartChat = async () => {
+  const handleStartChat = () => {
     setChatState(ChatState.SEARCHING);
     setMessages([]);
     setStopConfirm(false);
     setChatId(Date.now());
     
-    setTimeout(async () => {
-      try {
-        const greeting = await startNewChatSession();
-        setChatState(ChatState.CONNECTED);
-        
-        const initialMessages: Message[] = [];
-        if (interests.length > 0) {
-            const randomInterest = interests[Math.floor(Math.random() * interests.length)];
-            initialMessages.push({
-                id: 'sys-' + Date.now(),
-                text: `${STRINGS.commonInterests} ${randomInterest}`,
-                sender: 'system',
-                timestamp: Date.now()
-            });
+    // Connect to Realtime Service
+    realtimeService.disconnect(); // Ensure clean slate
+    realtimeService.connect(
+        (msg) => {
+            setMessages(prev => [...prev, msg]);
+        },
+        (connected) => {
+            if (connected) {
+                setChatState(ChatState.CONNECTED);
+                // Send an initial system message locally if needed
+                if (interests.length > 0) {
+                     // Optionally notify about interests
+                }
+            } else {
+                if (chatState === ChatState.CONNECTED) {
+                    setChatState(ChatState.DISCONNECTED);
+                    setMessages(prev => [...prev, {
+                        id: Date.now().toString(),
+                        text: 'الغريب غادر المحادثة.',
+                        sender: 'system',
+                        timestamp: Date.now()
+                    }]);
+                }
+            }
         }
-        initialMessages.push({
-          id: Date.now().toString(),
-          text: greeting,
-          sender: 'other',
-          timestamp: Date.now()
-        });
-
-        setMessages(initialMessages);
-      } catch (e) {
-        console.error(e);
-        setChatState(ChatState.IDLE);
-      }
-    }, 1500 + Math.random() * 2000);
+    );
   };
 
   const handleStopClick = () => {
@@ -115,6 +135,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
           if (!stopConfirm) {
               setStopConfirm(true);
           } else {
+              realtimeService.disconnect();
               setChatState(ChatState.DISCONNECTED);
               setStopConfirm(false);
               setMessages(prev => [...prev, {
@@ -127,7 +148,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
       }
   };
 
-  const handleSend = async () => {
+  const handleSend = () => {
     if (!input.trim() || chatState !== ChatState.CONNECTED) return;
 
     const userMsg: Message = {
@@ -140,22 +161,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
     setMessages(prev => [...prev, userMsg]);
     setInput('');
 
-    try {
-      const reply = await sendMessageToAI(userMsg.text);
-      setTimeout(() => {
-          if (chatState === ChatState.CONNECTED) {
-            const aiMsg: Message = {
-                id: (Date.now() + 1).toString(),
-                text: reply,
-                sender: 'other',
-                timestamp: Date.now()
-            };
-            setMessages(prev => [...prev, aiMsg]);
-          }
-      }, 1000);
-    } catch (e) {
-        console.error(e);
-    }
+    // Send via Realtime Service
+    realtimeService.sendMessage(userMsg.text);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -178,11 +185,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
         </div>
         <div className="text-center space-y-2">
             <p className="text-xl font-medium animate-pulse">{STRINGS.searching}</p>
+            <p className="text-sm text-gray-500 max-w-xs mx-auto">
+               ملاحظة: لكي يعمل هذا الوضع، يجب فتح الموقع في نافذة أخرى (Tab) في نفس الوقت لمحاكاة شخص آخر.
+            </p>
             {interests.length > 0 && (
                 <p className="text-sm text-gray-400">نبحث عن شخص يحب: {interests.join(', ')}</p>
             )}
         </div>
-        <button onClick={() => { setChatState(ChatState.IDLE); onBack(); }} className="mt-8 text-gray-500 hover:text-white">
+        <button onClick={() => { setChatState(ChatState.IDLE); realtimeService.disconnect(); onBack(); }} className="mt-8 text-gray-500 hover:text-white">
             إلغاء
         </button>
       </div>
@@ -192,9 +202,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
   return (
     <div className="flex flex-col h-full bg-black relative">
       {/* Header - Always visible but styled differently for video */}
-      <div className={`flex items-center justify-between px-4 py-3 z-20 sticky top-0 ${mode === 'video' ? 'bg-black/80 backdrop-blur-md absolute w-full border-b-0' : 'bg-[#121212] border-b border-ig-darkSec shadow-md'}`}>
+      <div className={`flex items-center justify-between px-4 py-3 z-20 sticky top-0 ${mode === 'video' ? 'bg-black/80 backdrop-blur-md absolute w-full border-b-0 top-0 left-0 right-0' : 'bg-[#121212] border-b border-ig-darkSec shadow-md'}`}>
         <div className="flex items-center space-x-3 space-x-reverse">
-          <button onClick={onBack} className="p-1 hover:bg-gray-800 rounded-full bg-black/40 text-white">
+          <button onClick={() => { realtimeService.disconnect(); onBack(); }} className="p-1 hover:bg-gray-800 rounded-full bg-black/40 text-white">
             <ArrowRight className="w-6 h-6" />
           </button>
           
@@ -253,12 +263,15 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
             {/* 1. STRANGER VIEW (TOP HALF) */}
             <div className="flex-1 relative overflow-hidden bg-[#1a1a1a]">
                 {chatState === ChatState.CONNECTED ? (
-                    // Simulated Stranger Video
-                     <img 
-                        src={`https://picsum.photos/seed/${chatId}/500/700`} 
-                        alt="Stranger" 
-                        className="w-full h-full object-cover animate-pulse-slow"
-                     />
+                    // Simulated Stranger Video (In a real app, this would be a WebRTC stream)
+                     <div className="w-full h-full relative">
+                         <img 
+                            src={`https://picsum.photos/seed/${chatId}/500/700`} 
+                            alt="Stranger" 
+                            className="w-full h-full object-cover"
+                         />
+                         <div className="absolute inset-0 bg-black/10"></div>
+                     </div>
                 ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-500 bg-black">
                         <div className="text-center">
@@ -269,13 +282,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
                 )}
                 
                 {/* Stranger Label */}
-                <div className="absolute top-16 left-4 bg-black/60 px-3 py-1 rounded-md text-xs font-bold text-white backdrop-blur-sm flex items-center gap-2">
+                <div className="absolute top-16 left-4 bg-black/60 px-3 py-1 rounded-md text-xs font-bold text-white backdrop-blur-sm flex items-center gap-2 z-10">
                     <span>{STRINGS.stranger}</span>
                     {chatState === ChatState.CONNECTED && <span className="w-2 h-2 rounded-full bg-green-500"></span>}
                 </div>
 
-                {/* Messages Overlay (Transparent layer on top of video) */}
-                <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-4 flex flex-col justify-end overflow-y-auto no-scrollbar pointer-events-none">
+                {/* Messages Overlay - Added padding bottom to avoid input overlap */}
+                <div className="absolute bottom-0 left-0 right-0 top-1/4 bg-gradient-to-t from-black via-black/50 to-transparent px-4 pb-20 flex flex-col justify-end overflow-y-auto no-scrollbar pointer-events-none z-10">
                      {messages.map((msg) => (
                          <div key={msg.id} className={`mb-2 px-3 py-2 rounded-xl max-w-[85%] text-sm backdrop-blur-md shadow-sm pointer-events-auto transition-all ${
                              msg.sender === 'system' ? 'self-center bg-gray-800/80 text-gray-300 text-xs py-1' :
@@ -291,7 +304,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
 
             {/* 2. USER VIEW (BOTTOM HALF) */}
             <div className="flex-1 relative overflow-hidden bg-black border-t-2 border-[#262626]">
-                 {isCamOn ? (
+                 {!cameraError && isCamOn ? (
                     <video 
                         ref={localVideoRef} 
                         autoPlay 
@@ -301,32 +314,42 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
                     />
                  ) : (
                     <div className="w-full h-full flex items-center justify-center bg-[#121212] text-gray-500">
-                        <div className="text-center">
-                            <CameraOff className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                            <p>الكاميرا مغلقة</p>
+                        <div className="text-center px-4">
+                            {cameraError ? (
+                                <>
+                                    <AlertCircle className="w-10 h-10 mx-auto mb-2 text-red-500" />
+                                    <p className="text-red-400 text-sm">تعذر الوصول للكاميرا</p>
+                                    <p className="text-xs text-gray-600 mt-1">تأكد من الصلاحيات</p>
+                                </>
+                            ) : (
+                                <>
+                                    <CameraOff className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                                    <p>الكاميرا مغلقة</p>
+                                </>
+                            )}
                         </div>
                     </div>
                  )}
 
                  {/* User Label & Controls */}
-                 <div className="absolute top-4 left-4 bg-black/60 px-3 py-1 rounded-md text-xs font-bold text-white backdrop-blur-sm">
+                 <div className="absolute top-4 left-4 bg-black/60 px-3 py-1 rounded-md text-xs font-bold text-white backdrop-blur-sm z-10">
                      أنت
                  </div>
 
                  {/* Local Controls Overlay */}
-                 <div className="absolute bottom-20 right-4 flex flex-col gap-3">
+                 <div className="absolute top-4 right-4 flex flex-col gap-3 z-20">
                      <button onClick={() => setIsMicOn(!isMicOn)} className={`p-3 rounded-full backdrop-blur-md shadow-lg border border-white/10 transition-all ${isMicOn ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-red-500/80 text-white'}`}>
                         {isMicOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
                      </button>
-                     <button onClick={() => setIsCamOn(!isCamOn)} className={`p-3 rounded-full backdrop-blur-md shadow-lg border border-white/10 transition-all ${isCamOn ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-red-500/80 text-white'}`}>
-                        {isCamOn ? <Camera className="w-5 h-5" /> : <CameraOff className="w-5 h-5" />}
+                     <button onClick={() => { setIsCamOn(!isCamOn); setCameraError(false); }} className={`p-3 rounded-full backdrop-blur-md shadow-lg border border-white/10 transition-all ${isCamOn && !cameraError ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-red-500/80 text-white'}`}>
+                        {isCamOn && !cameraError ? <Camera className="w-5 h-5" /> : <CameraOff className="w-5 h-5" />}
                      </button>
                  </div>
             </div>
 
         </div>
       ) : (
-        // === TEXT MODE LAYOUT (Original) ===
+        // === TEXT MODE LAYOUT ===
         <div className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar bg-black">
             {messages.map((msg) => {
                 if (msg.sender === 'system') {
@@ -369,7 +392,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
       )}
 
       {/* Input Area - Shared for both modes */}
-      <div className={`p-3 flex items-center gap-3 z-30 ${mode === 'video' ? 'bg-black border-t border-gray-800 absolute bottom-0 w-full' : 'bg-[#121212] border-t border-ig-darkSec'}`}>
+      <div className={`p-3 flex items-center gap-3 z-30 transition-all ${mode === 'video' ? 'bg-black/80 backdrop-blur-lg border-t border-white/10 absolute bottom-0 w-full' : 'bg-[#121212] border-t border-ig-darkSec'}`}>
         <div className={`flex-1 flex items-center bg-[#262626] rounded-3xl px-4 py-2 border ${chatState === ChatState.CONNECTED ? 'border-transparent focus-within:border-gray-500' : 'border-red-900/50 opacity-50 cursor-not-allowed'}`}>
             <input
                 type="text"
