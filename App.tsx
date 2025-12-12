@@ -1,17 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import BottomNav from './components/BottomNav';
 import ChatWindow from './components/ChatWindow';
 import StoryRail from './components/StoryRail';
 import CreateVideo from './components/CreateVideo';
 import ReelsView from './components/ReelsView';
-import { Tab, ChatMode, Reel, Story } from './types';
+import ProfileView from './components/ProfileView';
+import AuthScreen from './components/AuthScreen';
+import { Tab, ChatMode, Reel, Story, User } from './types';
 import { STRINGS } from './constants';
-import { Tags, Video, MessageSquareText, X, ArrowRight, Clapperboard, PlusSquare, Search, User, MessageCircle } from 'lucide-react';
+import { Tags, Video, MessageSquareText, X, ArrowRight, Clapperboard, PlusSquare, Search, MessageCircle } from 'lucide-react';
 
+// Using reliable Google sample videos to ensure playback works
 const DUMMY_REELS: Reel[] = [
   {
     id: '1',
-    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-waves-in-the-water-1164-large.mp4',
+    videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
     username: 'بحر_الهدوء',
     userAvatar: 'https://picsum.photos/100/100?random=10',
     description: 'يوم جميل على الشاطئ 🌊 #صيف',
@@ -21,10 +24,10 @@ const DUMMY_REELS: Reel[] = [
   },
   {
     id: '2',
-    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-tree-with-yellow-flowers-1173-large.mp4',
+    videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
     username: 'طبيعة_ساحرة',
     userAvatar: 'https://picsum.photos/100/100?random=11',
-    description: 'جمال الربيع 🌸',
+    description: 'جمال الطبيعة الخلاب 🏔️',
     likes: 850,
     comments: 20,
     shares: 5,
@@ -32,10 +35,10 @@ const DUMMY_REELS: Reel[] = [
   },
   {
     id: '3',
-    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-cheering-crowd-loud-at-a-concert-460-large.mp4',
-    username: 'موسيقى_لايف',
+    videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+    username: 'مغامرات',
     userAvatar: 'https://picsum.photos/100/100?random=12',
-    description: 'أجواء الحفلة لا توصف! 🔥🎸',
+    description: 'هل جربت هذا من قبل؟ 🔥🎸',
     likes: 5600,
     comments: 300,
     shares: 450
@@ -51,6 +54,9 @@ const DUMMY_STORIES: Story[] = [
 ];
 
 const App: React.FC = () => {
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
+
   const [activeTab, setActiveTab] = useState<Tab>('home');
   const [isInChat, setIsInChat] = useState(false);
   const [interests, setInterests] = useState<string[]>([]);
@@ -60,6 +66,51 @@ const App: React.FC = () => {
   // Data State
   const [reels, setReels] = useState<Reel[]>(DUMMY_REELS);
   const [stories, setStories] = useState<Story[]>(DUMMY_STORIES);
+
+  // --- AUTH CHECK ON MOUNT ---
+  useEffect(() => {
+      const checkAuth = () => {
+          const storedUser = localStorage.getItem('nel_user_session');
+          if (storedUser) {
+              try {
+                  const parsedUser = JSON.parse(storedUser);
+                  setCurrentUser(parsedUser);
+                  // Update Stories with user avatar if exists
+                  setStories(prev => {
+                      const newStories = [...prev];
+                      if(newStories.length > 0) {
+                          newStories[0] = { ...newStories[0], img: parsedUser.avatar || newStories[0].img };
+                      }
+                      return newStories;
+                  });
+              } catch (e) {
+                  console.error("Failed to parse user session");
+              }
+          }
+          setIsLoadingAuth(false);
+      };
+      
+      // Simulate splash screen delay
+      setTimeout(checkAuth, 1000);
+  }, []);
+
+  const handleLogin = (user: User) => {
+      setCurrentUser(user);
+      // Update Stories placeholder
+      setStories(prev => {
+        const newStories = [...prev];
+        if(newStories.length > 0) {
+            newStories[0] = { ...newStories[0], img: user.avatar };
+        }
+        return newStories;
+    });
+  };
+
+  const handleLogout = () => {
+      localStorage.removeItem('nel_user_session');
+      setCurrentUser(null);
+      setActiveTab('home');
+  };
 
   const addInterest = () => {
     if (currentInterestInput.trim() && !interests.includes(currentInterestInput.trim())) {
@@ -89,15 +140,28 @@ const App: React.FC = () => {
   };
 
   const handlePublishStory = (newStory: Story) => {
-      // Logic: Update the user's story or add it if not exists. 
-      // For this demo, we assume the first item is the user placeholder and we update it/add to it.
-      // But simplest visualization is just ensuring "My Story" is active or adding next to it.
-      // Let's just update the first item to indicate active story
       const updatedStories = [...stories];
       updatedStories[0] = { ...updatedStories[0], ...newStory, isUser: true };
       setStories(updatedStories);
       setActiveTab('home');
   };
+
+  // --- RENDER ---
+  
+  if (isLoadingAuth) {
+      return (
+          <div className="h-screen w-full bg-black flex items-center justify-center">
+              <div className="flex flex-col items-center">
+                  <h1 className="font-logo text-6xl text-white mb-4 animate-pulse">{STRINGS.appName}</h1>
+                  <div className="w-6 h-6 border-2 border-[#0095f6] border-t-transparent rounded-full animate-spin"></div>
+              </div>
+          </div>
+      );
+  }
+
+  if (!currentUser) {
+      return <AuthScreen onLogin={handleLogin} />;
+  }
 
   const renderContent = () => {
     switch (activeTab) {
@@ -106,7 +170,7 @@ const App: React.FC = () => {
              return <ChatWindow onBack={() => setIsInChat(false)} interests={interests} mode={chatMode} />;
         }
         return (
-          <div className="flex flex-col h-full bg-black text-white p-6 relative overflow-y-auto no-scrollbar">
+          <div className="flex flex-col h-full bg-black text-white p-6 relative overflow-y-auto no-scrollbar pb-24">
             
             {/* Header: Logo & Online Count */}
             <div className="flex flex-col items-center mt-8 mb-10 animate-fadeIn">
@@ -126,6 +190,12 @@ const App: React.FC = () => {
             {/* Main Action Container */}
             <div className="flex-1 w-full max-w-sm mx-auto flex flex-col justify-center space-y-8 pb-10">
                 
+                {/* Greeting */}
+                <div className="text-center">
+                    <h2 className="text-xl font-bold text-gray-200">مرحباً، {currentUser.name.split(' ')[0]} 👋</h2>
+                    <p className="text-gray-500 text-xs mt-1">هل أنت مستعد لمحادثة جديدة؟</p>
+                </div>
+
                 {/* Interests Section */}
                 <div className="space-y-2">
                     <label className="text-xs font-bold text-gray-500 uppercase tracking-wider px-1 flex items-center gap-1">
@@ -168,18 +238,28 @@ const App: React.FC = () => {
                     </button>
                 </div>
 
-                {/* BIG START BUTTON */}
+                {/* BIG START BUTTON - ADVANCED & NO BORDER */}
                 <button 
                     onClick={() => startChat(chatMode)}
-                    className="group relative w-full h-20 rounded-2xl overflow-hidden shadow-lg transition-transform active:scale-95 touch-manipulation"
+                    className="group relative w-full h-20 rounded-2xl overflow-hidden shadow-[0_10px_40px_-10px_rgba(0,100,224,0.4)] transition-all active:scale-95 touch-manipulation hover:shadow-[0_20px_50px_-10px_rgba(0,149,246,0.6)]"
                 >
-                    <div className="absolute inset-0 bg-gradient-to-r from-ig-gradientStart via-ig-gradientMid to-ig-gradientEnd animate-pulse group-hover:animate-none transition-all"></div>
-                    <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity"></div>
-                    <div className="absolute inset-0 flex items-center justify-center gap-3">
-                        <span className="text-2xl font-black text-white tracking-wide uppercase drop-shadow-md">
+                    {/* Advanced Gradient Background - No Border */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#0f0f0f] via-[#0044cc] to-[#0095f6]"></div>
+                    
+                    {/* Subtle Top Highlight for 3D Depth (Glass effect) */}
+                    <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+
+                    {/* Texture & Shine Effects */}
+                    <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-15 mix-blend-overlay"></div>
+                    <div className="absolute -inset-[100%] bg-gradient-to-r from-transparent via-white/10 to-transparent group-hover:animate-shine skew-x-12 transition-all duration-1000"></div>
+                    
+                    <div className="absolute inset-0 flex items-center justify-center gap-3 z-10">
+                        <span className="text-2xl font-black text-white tracking-wide uppercase drop-shadow-lg group-hover:scale-105 transition-transform">
                             {STRINGS.startChat}
                         </span>
-                        <ArrowRight className="w-7 h-7 text-white drop-shadow-md group-hover:translate-x-1 transition-transform" />
+                        <div className="bg-white/5 p-2 rounded-full backdrop-blur-md group-hover:bg-white group-hover:text-[#0095f6] transition-colors duration-300">
+                             <ArrowRight className="w-6 h-6 text-white group-hover:text-[#0095f6] group-hover:translate-x-1 transition-transform" />
+                        </div>
                     </div>
                 </button>
 
@@ -200,15 +280,15 @@ const App: React.FC = () => {
         return <ReelsView reels={reels} />;
       case 'create':
         return <CreateVideo onClose={() => setActiveTab('home')} onPublishReel={handlePublishReel} onPublishStory={handlePublishStory} />;
-      case 'explore': // This is essentially the "Inbox" logic now based on icons
+      case 'explore': 
         return (
-          <div className="flex flex-col h-full bg-black">
+          <div className="flex flex-col h-full bg-black pb-20">
               <div className="p-4 border-b border-gray-800 flex justify-between items-center">
                   <h2 className="text-xl font-bold">الرسائل</h2>
                   <MessageCircle className="w-6 h-6" />
               </div>
               <StoryRail stories={stories} />
-              <div className="flex-1 overflow-y-auto">
+              <div className="flex-1 overflow-y-auto no-scrollbar pb-20">
                  {[1,2,3,4,5].map(i => (
                      <div key={i} className="flex items-center gap-3 p-4 hover:bg-gray-900 cursor-pointer">
                         <img src={`https://picsum.photos/50/50?random=${i}`} className="w-12 h-12 rounded-full" />
@@ -223,24 +303,20 @@ const App: React.FC = () => {
           </div>
         );
       case 'profile':
-        return (
-          <div className="flex flex-col items-center justify-center h-full text-gray-500 font-light space-y-4">
-              <User className="w-16 h-16 opacity-50" />
-              <p className="text-xl">الملف الشخصي</p>
-              <p className="text-sm opacity-60">تعديل بياناتك</p>
-          </div>
-        );
+        return <ProfileView currentUser={currentUser} onLogout={handleLogout} />;
       default:
         return null;
     }
   };
 
   return (
-    <div className="min-h-screen bg-black text-white font-sans mx-auto max-w-md md:max-w-full h-screen flex flex-col relative overflow-hidden">
-        <div className="flex-1 overflow-hidden relative">
+    <div className="h-screen w-full bg-black text-white font-sans mx-auto overflow-hidden relative">
+        <div className="absolute inset-0 w-full h-full">
             {renderContent()}
         </div>
-        {/* Hide Bottom Nav when in Chat or Create Mode */}
+        
+        {/* Navigation Bar - Absolute positioned at bottom */}
+        {/* Only hide in active Chat or Create Camera mode to allow full screen */}
         {!isInChat && activeTab !== 'create' && (
             <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
         )}

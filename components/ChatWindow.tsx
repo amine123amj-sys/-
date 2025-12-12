@@ -21,9 +21,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
   const [isMicOn, setIsMicOn] = useState(true);
   const [isCamOn, setIsCamOn] = useState(true);
   const [cameraError, setCameraError] = useState<boolean>(false);
+  const [isMockCam, setIsMockCam] = useState<boolean>(false); // Mock Camera state
+  
   const localVideoRef = useRef<HTMLVideoElement>(null);
-
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -41,55 +43,72 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
     };
   }, []);
 
-  // Camera handling for Video Mode with ERROR FIX
+  // Camera handling for Video Mode with ROBUST FIX & MOCK Fallback
   useEffect(() => {
-    let stream: MediaStream | null = null;
-    
+    let isMounted = true;
+
     const startCamera = async () => {
+        if (!isMounted) return;
         setCameraError(false);
-        try {
-            // Try to get both video and audio
-            stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            if (localVideoRef.current) {
-                localVideoRef.current.srcObject = stream;
-            }
-            setIsCamOn(true);
-        } catch (err) {
-            console.error("Error accessing camera:", err);
-            setCameraError(true);
-            setIsCamOn(false);
-            
-            // Fallback: Try audio only if video failed
+        setIsMockCam(false);
+
+        // Helper to safely try getting a stream
+        const getStream = async (constraints: MediaStreamConstraints) => {
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                // We got audio at least
-            } catch (audioErr) {
-                console.error("Error accessing audio:", audioErr);
-                setIsMicOn(false);
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return null;
+                return await navigator.mediaDevices.getUserMedia(constraints);
+            } catch (e) {
+                return null;
             }
+        };
+
+        let stream = null;
+
+        // Attempt 1: Standard Video + Audio
+        stream = await getStream({ video: true, audio: true });
+
+        // Attempt 2: Video only (if audio failed/denied)
+        if (!stream) {
+            console.warn("Video+Audio failed, trying video only");
+            stream = await getStream({ video: true });
+        }
+
+        if (isMounted) {
+            if (stream) {
+                streamRef.current = stream;
+                if (localVideoRef.current) {
+                    localVideoRef.current.srcObject = stream;
+                }
+                // Check what tracks we actually got
+                const hasVideo = stream.getVideoTracks().length > 0;
+                setIsCamOn(hasVideo);
+            } else {
+                console.warn("All camera attempts failed, switching to MOCK CAMERA.");
+                setIsMockCam(true);
+                setIsCamOn(true); // Technically "on" but mock
+            }
+        } else {
+             // Cleanup if unmounted
+             if (stream) stream.getTracks().forEach(t => t.stop());
         }
     };
 
     if (mode === 'video' && chatState !== ChatState.SEARCHING) {
-        if (isCamOn && !cameraError) {
+        if (isCamOn && !cameraError && !streamRef.current && !isMockCam) {
              startCamera();
-        } else {
-            // Stop tracks if camera is turned off by user
-            if (localVideoRef.current && localVideoRef.current.srcObject) {
-                const src = localVideoRef.current.srcObject as MediaStream;
-                src.getTracks().forEach(t => t.stop());
-                localVideoRef.current.srcObject = null;
-            }
+        } else if (!isCamOn && streamRef.current) {
+             // User turned off cam
+             streamRef.current.getVideoTracks().forEach(t => t.enabled = false);
+        } else if (isCamOn && streamRef.current) {
+             streamRef.current.getVideoTracks().forEach(t => t.enabled = true);
         }
     }
 
     return () => {
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-        }
-        if (localVideoRef.current) {
-             const src = localVideoRef.current.srcObject as MediaStream;
-             if (src) src.getTracks().forEach(t => t.stop());
+        isMounted = false;
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
         }
     };
   }, [mode, chatState, isCamOn]);
@@ -101,7 +120,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
     setChatId(Date.now());
     
     // Connect to Realtime Service
-    realtimeService.disconnect(); // Ensure clean slate
+    realtimeService.disconnect(); 
     realtimeService.connect(
         (msg) => {
             setMessages(prev => [...prev, msg]);
@@ -109,10 +128,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
         (connected) => {
             if (connected) {
                 setChatState(ChatState.CONNECTED);
-                // Send an initial system message locally if needed
-                if (interests.length > 0) {
-                     // Optionally notify about interests
-                }
             } else {
                 if (chatState === ChatState.CONNECTED) {
                     setChatState(ChatState.DISCONNECTED);
@@ -160,8 +175,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
 
     setMessages(prev => [...prev, userMsg]);
     setInput('');
-
-    // Send via Realtime Service
     realtimeService.sendMessage(userMsg.text);
   };
 
@@ -201,7 +214,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
 
   return (
     <div className="flex flex-col h-full bg-black relative">
-      {/* Header - Always visible but styled differently for video */}
+      {/* Header */}
       <div className={`flex items-center justify-between px-4 py-3 z-20 sticky top-0 ${mode === 'video' ? 'bg-black/80 backdrop-blur-md absolute w-full border-b-0 top-0 left-0 right-0' : 'bg-[#121212] border-b border-ig-darkSec shadow-md'}`}>
         <div className="flex items-center space-x-3 space-x-reverse">
           <button onClick={() => { realtimeService.disconnect(); onBack(); }} className="p-1 hover:bg-gray-800 rounded-full bg-black/40 text-white">
@@ -257,13 +270,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
 
       {/* Content Area */}
       {mode === 'video' ? (
-        // === VIDEO MODE LAYOUT (Split Screen) ===
+        // === VIDEO MODE LAYOUT ===
         <div className="flex-1 flex flex-col min-h-0 relative bg-gray-900">
             
             {/* 1. STRANGER VIEW (TOP HALF) */}
             <div className="flex-1 relative overflow-hidden bg-[#1a1a1a]">
                 {chatState === ChatState.CONNECTED ? (
-                    // Simulated Stranger Video (In a real app, this would be a WebRTC stream)
                      <div className="w-full h-full relative">
                          <img 
                             src={`https://picsum.photos/seed/${chatId}/500/700`} 
@@ -281,13 +293,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
                     </div>
                 )}
                 
-                {/* Stranger Label */}
                 <div className="absolute top-16 left-4 bg-black/60 px-3 py-1 rounded-md text-xs font-bold text-white backdrop-blur-sm flex items-center gap-2 z-10">
                     <span>{STRINGS.stranger}</span>
                     {chatState === ChatState.CONNECTED && <span className="w-2 h-2 rounded-full bg-green-500"></span>}
                 </div>
 
-                {/* Messages Overlay - Added padding bottom to avoid input overlap */}
+                {/* Messages Overlay */}
                 <div className="absolute bottom-0 left-0 right-0 top-1/4 bg-gradient-to-t from-black via-black/50 to-transparent px-4 pb-20 flex flex-col justify-end overflow-y-auto no-scrollbar pointer-events-none z-10">
                      {messages.map((msg) => (
                          <div key={msg.id} className={`mb-2 px-3 py-2 rounded-xl max-w-[85%] text-sm backdrop-blur-md shadow-sm pointer-events-auto transition-all ${
@@ -304,14 +315,29 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
 
             {/* 2. USER VIEW (BOTTOM HALF) */}
             <div className="flex-1 relative overflow-hidden bg-black border-t-2 border-[#262626]">
-                 {!cameraError && isCamOn ? (
-                    <video 
-                        ref={localVideoRef} 
-                        autoPlay 
-                        playsInline 
-                        muted 
-                        className="w-full h-full object-cover transform -scale-x-100" 
-                    />
+                 {!cameraError && (isCamOn || isMockCam) ? (
+                    isMockCam ? (
+                         <div className="absolute inset-0 w-full h-full">
+                            <video 
+                                src="https://assets.mixkit.co/videos/preview/mixkit-girl-in-neon-sign-1232-large.mp4" 
+                                autoPlay 
+                                loop 
+                                muted 
+                                className="w-full h-full object-cover" 
+                            />
+                            <div className="absolute top-2 left-2 bg-red-600 px-2 py-0.5 rounded text-[8px] font-bold text-white">
+                                كاميرا وهمية
+                            </div>
+                         </div>
+                    ) : (
+                        <video 
+                            ref={localVideoRef} 
+                            autoPlay 
+                            playsInline 
+                            muted 
+                            className="w-full h-full object-cover transform -scale-x-100" 
+                        />
+                    )
                  ) : (
                     <div className="w-full h-full flex items-center justify-center bg-[#121212] text-gray-500">
                         <div className="text-center px-4">
@@ -331,7 +357,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
                     </div>
                  )}
 
-                 {/* User Label & Controls */}
                  <div className="absolute top-4 left-4 bg-black/60 px-3 py-1 rounded-md text-xs font-bold text-white backdrop-blur-sm z-10">
                      أنت
                  </div>
@@ -391,7 +416,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
         </div>
       )}
 
-      {/* Input Area - Shared for both modes */}
+      {/* Input Area */}
       <div className={`p-3 flex items-center gap-3 z-30 transition-all ${mode === 'video' ? 'bg-black/80 backdrop-blur-lg border-t border-white/10 absolute bottom-0 w-full' : 'bg-[#121212] border-t border-ig-darkSec'}`}>
         <div className={`flex-1 flex items-center bg-[#262626] rounded-3xl px-4 py-2 border ${chatState === ChatState.CONNECTED ? 'border-transparent focus-within:border-gray-500' : 'border-red-900/50 opacity-50 cursor-not-allowed'}`}>
             <input

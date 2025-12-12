@@ -1,3 +1,4 @@
+
 export interface Message {
   id: string;
   text: string;
@@ -45,4 +46,16 @@ export interface Reel {
     duration: string;
     target: string;
   };
+}
+
+export interface User {
+  id: string;
+  username: string;
+  name: string;
+  email: string;
+  avatar: string;
+  bio?: string;
+  followers: number;
+  following: number;
+  postsCount: number;
 }
