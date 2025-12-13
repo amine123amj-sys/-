@@ -46,6 +46,8 @@ export interface Reel {
     duration: string;
     target: string;
   };
+  tags?: string[];
+  category?: string;
 }
 
 export interface User {

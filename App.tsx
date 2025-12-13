@@ -20,7 +20,9 @@ const DUMMY_REELS: Reel[] = [
     description: 'يوم جميل على الشاطئ 🌊 #صيف',
     likes: 1240,
     comments: 45,
-    shares: 12
+    shares: 12,
+    category: 'nature',
+    tags: ['صيف', 'بحر', 'طبيعة']
   },
   {
     id: '2',
@@ -31,7 +33,9 @@ const DUMMY_REELS: Reel[] = [
     likes: 850,
     comments: 20,
     shares: 5,
-    isBoosted: true
+    isBoosted: true,
+    category: 'travel',
+    tags: ['سفر', 'جبال']
   },
   {
     id: '3',
@@ -41,7 +45,9 @@ const DUMMY_REELS: Reel[] = [
     description: 'هل جربت هذا من قبل؟ 🔥🎸',
     likes: 5600,
     comments: 300,
-    shares: 450
+    shares: 450,
+    category: 'adventure',
+    tags: ['مغامرة', 'اكشن']
   }
 ];
 
@@ -51,6 +57,8 @@ const DUMMY_STORIES: Story[] = [
   { id: 103, name: 'سارة', img: 'https://picsum.photos/100/100?random=3', isUser: false },
   { id: 104, name: 'علي', img: 'https://picsum.photos/100/100?random=4', isUser: false },
   { id: 105, name: 'نور', img: 'https://picsum.photos/100/100?random=5', isUser: false },
+  { id: 106, name: 'تيك_تو', img: 'https://picsum.photos/100/100?random=6', isUser: false },
+  { id: 107, name: 'جيمر', img: 'https://picsum.photos/100/100?random=7', isUser: false },
 ];
 
 const MOCK_CHAT_USERS = [
@@ -160,6 +168,34 @@ const App: React.FC = () => {
       setActiveTab('home');
   };
 
+  // Simulate Recommendation Algorithm (Lazy Loading)
+  const handleLoadMoreReels = () => {
+      // Create random reels to simulate infinite scroll
+      const randomVideos = [
+          'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
+          'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+          'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4'
+      ];
+      
+      const newReels: Reel[] = Array.from({ length: 3 }).map((_, i) => ({
+          id: `new_${Date.now()}_${i}`,
+          videoUrl: randomVideos[Math.floor(Math.random() * randomVideos.length)],
+          username: `user_${Math.floor(Math.random() * 1000)}`,
+          userAvatar: `https://picsum.photos/100/100?random=${Date.now() + i}`,
+          description: 'فيديو مقترح لك 🌟 #foryou',
+          likes: Math.floor(Math.random() * 5000),
+          comments: Math.floor(Math.random() * 200),
+          shares: Math.floor(Math.random() * 100),
+          category: 'random',
+          tags: ['foryou', 'viral']
+      }));
+
+      // Simulate network delay
+      setTimeout(() => {
+          setReels(prev => [...prev, ...newReels]);
+      }, 1000);
+  };
+
   // --- RENDER ---
   
   if (isLoadingAuth) {
@@ -184,34 +220,41 @@ const App: React.FC = () => {
              return <ChatWindow onBack={() => setIsInChat(false)} interests={interests} mode={chatMode} />;
         }
         return (
-          <div className="flex flex-col h-full bg-black text-white p-6 relative overflow-y-auto no-scrollbar pb-24">
+          <div className="flex flex-col h-full bg-black text-white relative overflow-y-auto no-scrollbar pb-24">
             
-            {/* Header: Logo & Online Count */}
-            <div className="flex flex-col items-center mt-8 mb-10 animate-fadeIn">
-                 <h1 className="text-6xl font-logo text-white mb-4 drop-shadow-lg">
+            {/* --- Instagram Style Header --- */}
+            <div className="sticky top-0 z-30 bg-black/90 backdrop-blur-md border-b border-gray-800 flex items-center justify-between px-4 py-3">
+                 <h1 className="text-3xl font-logo text-white select-none">
                     {STRINGS.appName}
                  </h1>
-                 
-                 <div className="flex items-center gap-2 bg-[#1a1a1a] px-4 py-1.5 rounded-full border border-gray-800 shadow-sm">
-                     <span className="relative flex h-2.5 w-2.5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
-                     </span>
-                     <span className="text-xs font-mono text-gray-300 font-medium">24,103 {STRINGS.onlineUsers}</span>
+                 <div className="flex items-center gap-4">
+                     {/* Future Online Count Badge */}
+                     <div className="flex items-center gap-1.5 bg-[#1a1a1a] px-2 py-1 rounded-lg border border-gray-800">
+                         <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                         <span className="text-[10px] font-bold text-gray-400">24K</span>
+                     </div>
+                     <MessageCircle className="w-6 h-6 hover:text-[#0095f6] transition-colors cursor-pointer" />
                  </div>
             </div>
 
+            {/* --- STORIES RAIL (Added here for Instagram feel) --- */}
+            <div className="mt-2 border-b border-gray-900 pb-2">
+                <StoryRail stories={stories} />
+            </div>
+
             {/* Main Action Container */}
-            <div className="flex-1 w-full max-w-sm mx-auto flex flex-col justify-center space-y-8 pb-10">
+            <div className="flex-1 w-full max-w-sm mx-auto flex flex-col justify-center space-y-8 p-6">
                 
                 {/* Greeting */}
-                <div className="text-center">
-                    <h2 className="text-xl font-bold text-gray-200">مرحباً، {currentUser.name.split(' ')[0]} 👋</h2>
-                    <p className="text-gray-500 text-xs mt-1">هل أنت مستعد لمحادثة جديدة؟</p>
+                <div className="text-center animate-in slide-in-from-bottom-4 duration-500">
+                    <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+                        مرحباً، {currentUser.name.split(' ')[0]}
+                    </h2>
+                    <p className="text-gray-400 text-sm mt-1">ابدأ محادثة عشوائية مع أشخاص من حول العالم</p>
                 </div>
 
                 {/* Interests Section */}
-                <div className="space-y-2">
+                <div className="space-y-2 animate-in slide-in-from-bottom-6 duration-700">
                     <label className="text-xs font-bold text-gray-500 uppercase tracking-wider px-1 flex items-center gap-1">
                         <Tags className="w-3 h-3" />
                         {STRINGS.interestsLabel}
@@ -235,7 +278,7 @@ const App: React.FC = () => {
                 </div>
 
                 {/* Mode Toggle Switch */}
-                <div className="bg-[#1c1c1c] p-1.5 rounded-2xl flex border border-gray-800 relative">
+                <div className="bg-[#1c1c1c] p-1.5 rounded-2xl flex border border-gray-800 relative animate-in slide-in-from-bottom-8 duration-700">
                     <button 
                         onClick={() => setChatMode('text')}
                         className={`flex-1 py-3.5 rounded-xl flex items-center justify-center gap-2 text-sm font-bold transition-all duration-300 ${chatMode === 'text' ? 'bg-white text-black shadow-md scale-[1.02]' : 'text-gray-500 hover:text-gray-300'}`}
@@ -252,10 +295,10 @@ const App: React.FC = () => {
                     </button>
                 </div>
 
-                {/* BIG START BUTTON - ADVANCED & NO BORDER */}
+                {/* BIG START BUTTON */}
                 <button 
                     onClick={() => startChat(chatMode)}
-                    className="group relative w-full h-20 rounded-2xl overflow-hidden shadow-[0_10px_40px_-10px_rgba(0,100,224,0.4)] transition-all active:scale-95 touch-manipulation hover:shadow-[0_20px_50px_-10px_rgba(0,149,246,0.6)]"
+                    className="group relative w-full h-20 rounded-2xl overflow-hidden shadow-[0_10px_40px_-10px_rgba(0,100,224,0.4)] transition-all active:scale-95 touch-manipulation hover:shadow-[0_20px_50px_-10px_rgba(0,149,246,0.6)] animate-in slide-in-from-bottom-10 duration-1000"
                 >
                     {/* Advanced Gradient Background - No Border */}
                     <div className="absolute inset-0 bg-gradient-to-r from-[#0f0f0f] via-[#0044cc] to-[#0095f6]"></div>
@@ -278,20 +321,10 @@ const App: React.FC = () => {
                 </button>
 
             </div>
-
-            {/* Disclaimer Footer */}
-            <div className="mt-auto text-center px-4 pb-4 opacity-40 hover:opacity-80 transition-opacity">
-                <p className="text-[10px] text-gray-400 leading-tight">
-                    By using {STRINGS.appName}, you accept our Terms of Service. 
-                    <br/>
-                    Please be respectful to others.
-                </p>
-            </div>
-
           </div>
         );
       case 'reels':
-        return <ReelsView reels={reels} />;
+        return <ReelsView reels={reels} onLoadMore={handleLoadMoreReels} />;
       case 'create':
         return <CreateVideo onClose={() => setActiveTab('home')} onPublishReel={handlePublishReel} onPublishStory={handlePublishStory} />;
       case 'explore': 

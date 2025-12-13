@@ -66,6 +66,18 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode: initia
     };
   }, [targetUser]); // Run when targetUser changes or mounts
 
+  // Monitor Chat State for System Messages
+  useEffect(() => {
+    if (chatState === ChatState.CONNECTED && !targetUser) {
+      setMessages(prev => [...prev, {
+        id: `sys_conn_${Date.now()}`,
+        text: STRINGS.connected,
+        sender: 'system',
+        timestamp: Date.now()
+      }]);
+    }
+  }, [chatState, targetUser]);
+
   // Camera handling for Video Mode with ROBUST FIX & MOCK Fallback
   useEffect(() => {
     let isMounted = true;
