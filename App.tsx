@@ -8,7 +8,7 @@ import ProfileView from './components/ProfileView';
 import AuthScreen from './components/AuthScreen';
 import { Tab, ChatMode, Reel, Story, User } from './types';
 import { STRINGS } from './constants';
-import { Tags, Video, MessageSquareText, X, ArrowRight, Clapperboard, PlusSquare, Search, MessageCircle } from 'lucide-react';
+import { Tags, Video, MessageSquareText, X, ArrowRight, Clapperboard, PlusSquare, Search, MessageCircle, Edit } from 'lucide-react';
 
 // Using reliable Google sample videos to ensure playback works
 const DUMMY_REELS: Reel[] = [
@@ -53,6 +53,16 @@ const DUMMY_STORIES: Story[] = [
   { id: 105, name: 'نور', img: 'https://picsum.photos/100/100?random=5', isUser: false },
 ];
 
+const MOCK_CHAT_USERS = [
+    { id: 1, name: 'أحمد محمد', username: 'ahmed_m', msg: 'هلا، كيف الحال؟', time: 'الآن', active: true, avatar: 'https://picsum.photos/100/100?random=200' },
+    { id: 2, name: 'سارة', username: 'sara_art', msg: 'شكراً على المشاركة 🙏', time: '2د', active: false, avatar: 'https://picsum.photos/100/100?random=201' },
+    { id: 3, name: 'Khaled Gamer', username: 'khaled_g', msg: 'شفت الفيديو الجديد؟', time: '1س', active: true, avatar: 'https://picsum.photos/100/100?random=202' },
+    { id: 4, name: 'Unknown User', username: 'user_992', msg: 'مرحبا', time: '5س', active: false, avatar: 'https://picsum.photos/100/100?random=203' },
+    { id: 5, name: 'نور الهدى', username: 'noor_life', msg: '❤️ أحببت صورتك', time: '1ي', active: false, avatar: 'https://picsum.photos/100/100?random=204' },
+    { id: 6, name: 'Mohamed Ali', username: 'mo_h', msg: 'تم الإرسال', time: '1ي', active: false, avatar: 'https://picsum.photos/100/100?random=205' },
+    { id: 7, name: 'Designer X', username: 'design_pro', msg: 'أرسل لي التفاصيل', time: '2ي', active: true, avatar: 'https://picsum.photos/100/100?random=206' },
+];
+
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
@@ -63,6 +73,10 @@ const App: React.FC = () => {
   const [currentInterestInput, setCurrentInterestInput] = useState('');
   const [chatMode, setChatMode] = useState<ChatMode>('text');
   
+  // Search State for Messages
+  const [messageSearchQuery, setMessageSearchQuery] = useState('');
+  const [selectedFriend, setSelectedFriend] = useState<any>(null);
+
   // Data State
   const [reels, setReels] = useState<Reel[]>(DUMMY_REELS);
   const [stories, setStories] = useState<Story[]>(DUMMY_STORIES);
@@ -281,24 +295,86 @@ const App: React.FC = () => {
       case 'create':
         return <CreateVideo onClose={() => setActiveTab('home')} onPublishReel={handlePublishReel} onPublishStory={handlePublishStory} />;
       case 'explore': 
+        // If a friend is selected, show their chat window
+        if (selectedFriend) {
+            return (
+                <ChatWindow 
+                    onBack={() => setSelectedFriend(null)} 
+                    interests={[]} 
+                    mode="text" 
+                    targetUser={selectedFriend}
+                />
+            );
+        }
+
+        const filteredUsers = MOCK_CHAT_USERS.filter(u => 
+            u.name.toLowerCase().includes(messageSearchQuery.toLowerCase()) || 
+            u.username.toLowerCase().includes(messageSearchQuery.toLowerCase())
+        );
         return (
           <div className="flex flex-col h-full bg-black pb-20">
-              <div className="p-4 border-b border-gray-800 flex justify-between items-center">
-                  <h2 className="text-xl font-bold">الرسائل</h2>
-                  <MessageCircle className="w-6 h-6" />
+              <div className="p-4 flex justify-between items-center sticky top-0 bg-black z-20">
+                  <h2 className="text-xl font-bold">{currentUser.username}</h2>
+                  <Edit className="w-6 h-6" />
               </div>
-              <StoryRail stories={stories} />
+              
+              {/* Search Bar */}
+              <div className="px-4 pb-4 sticky top-14 bg-black z-20">
+                  <div className="bg-[#262626] rounded-xl flex items-center px-3 py-2 gap-2 transition-all focus-within:ring-1 focus-within:ring-gray-600">
+                      <Search className="w-4 h-4 text-gray-400" />
+                      <input 
+                        value={messageSearchQuery}
+                        onChange={(e) => setMessageSearchQuery(e.target.value)}
+                        placeholder="بحث" 
+                        className="bg-transparent border-none outline-none text-white text-sm w-full placeholder-gray-400"
+                      />
+                      {messageSearchQuery && (
+                          <button onClick={() => setMessageSearchQuery('')}><X className="w-4 h-4 text-gray-400" /></button>
+                      )}
+                  </div>
+              </div>
+
+              <div className="mb-2">
+                 <h3 className="px-4 text-sm font-bold text-gray-300 mb-2">الأصدقاء المقربون</h3>
+                 <StoryRail stories={stories} />
+              </div>
+
+              <div className="flex justify-between items-center px-4 py-2 border-b border-gray-800">
+                  <span className="font-bold text-sm">الرسائل</span>
+                  <span className="text-[#0095f6] text-sm font-semibold cursor-pointer">الطلبات</span>
+              </div>
+              
               <div className="flex-1 overflow-y-auto no-scrollbar pb-20">
-                 {[1,2,3,4,5].map(i => (
-                     <div key={i} className="flex items-center gap-3 p-4 hover:bg-gray-900 cursor-pointer">
-                        <img src={`https://picsum.photos/50/50?random=${i}`} className="w-12 h-12 rounded-full" />
-                        <div className="flex-1">
-                            <h4 className="font-semibold text-sm">مستخدم {i}</h4>
-                            <p className="text-xs text-gray-400">مرحبا، هل أنت موجود؟</p>
-                        </div>
-                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                 {filteredUsers.length > 0 ? (
+                     filteredUsers.map(user => (
+                         <div 
+                            key={user.id} 
+                            onClick={() => setSelectedFriend(user)}
+                            className="flex items-center gap-3 p-4 hover:bg-gray-900 cursor-pointer active:bg-gray-800 transition-colors"
+                         >
+                            <div className="relative">
+                                <img src={user.avatar} className="w-14 h-14 rounded-full border border-gray-800" />
+                                {user.active && (
+                                    <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-black"></div>
+                                )}
+                            </div>
+                            <div className="flex-1">
+                                <h4 className="font-medium text-white text-sm">{user.name}</h4>
+                                <div className="flex items-center gap-1 text-xs text-gray-400 mt-0.5">
+                                    <p className={`${user.active ? 'text-white font-medium' : ''} truncate max-w-[150px]`}>{user.msg}</p>
+                                    <span>·</span>
+                                    <span>{user.time}</span>
+                                </div>
+                            </div>
+                            <button className="text-gray-500 hover:text-white"><MessageCircle className="w-5 h-5 opacity-50" /></button>
+                         </div>
+                     ))
+                 ) : (
+                     <div className="flex flex-col items-center justify-center py-10 text-gray-500 opacity-70">
+                         <Search className="w-10 h-10 mb-2" />
+                         <p className="text-sm">لا توجد نتائج لـ "{messageSearchQuery}"</p>
                      </div>
-                 ))}
+                 )}
               </div>
           </div>
         );
@@ -317,7 +393,7 @@ const App: React.FC = () => {
         
         {/* Navigation Bar - Absolute positioned at bottom */}
         {/* Only hide in active Chat or Create Camera mode to allow full screen */}
-        {!isInChat && activeTab !== 'create' && (
+        {!isInChat && !selectedFriend && activeTab !== 'create' && (
             <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
         )}
     </div>

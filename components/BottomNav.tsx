@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Search, PlusSquare, Clapperboard, User } from 'lucide-react';
+import { Home, PlusSquare, Clapperboard, MessageCircle } from 'lucide-react';
 import { Tab } from '../types';
 
 interface BottomNavProps {
@@ -30,9 +30,24 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab }) => {
         }
       </button>
       
-      {/* 2. Explore (Search) */}
-      <button onClick={() => setActiveTab('explore')} className="p-2 active:scale-90 transition-transform">
-        <Search className={`${getIconClass('explore')} ${activeTab === 'explore' ? 'stroke-[3px]' : ''}`} />
+      {/* 2. Explore (Messages) - The Requested "Big Message Button" */}
+      <button 
+        onClick={() => setActiveTab('explore')} 
+        className="active:scale-90 transition-transform relative"
+      >
+        <div className={`transition-all duration-300 flex items-center justify-center rounded-2xl ${
+            activeTab === 'explore' 
+            ? 'bg-[#0095f6] w-12 h-12 -mt-4 shadow-[0_8px_25px_rgba(0,149,246,0.5)]' 
+            : 'w-10 h-10'
+        }`}>
+            <MessageCircle 
+                className={`transition-all duration-300 ${
+                    activeTab === 'explore' 
+                    ? 'w-7 h-7 text-white fill-white' 
+                    : getIconClass('explore')
+                }`} 
+            />
+        </div>
       </button>
 
       {/* 3. Create (Create Videos) - Center Button */}

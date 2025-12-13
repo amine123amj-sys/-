@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, ArrowRight, Square, RotateCw, AlertCircle, Video as VideoIcon, Mic, MicOff, Camera, CameraOff } from 'lucide-react';
+import { Send, ArrowRight, Square, RotateCw, AlertCircle, Video as VideoIcon, Mic, MicOff, Camera, CameraOff, Phone } from 'lucide-react';
 import { ChatState, Message, ChatMode } from '../types';
 import { realtimeService } from '../services/realtimeService';
 import { STRINGS } from '../constants';
@@ -8,14 +8,23 @@ interface ChatWindowProps {
   onBack: () => void;
   interests: string[];
   mode: ChatMode;
+  targetUser?: {
+    id: string | number;
+    name: string;
+    avatar: string;
+    isActive?: boolean;
+  };
 }
 
-const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
+const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode: initialMode, targetUser }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [chatState, setChatState] = useState<ChatState>(ChatState.SEARCHING);
   const [stopConfirm, setStopConfirm] = useState(false);
   const [chatId, setChatId] = useState<number>(Date.now());
+  
+  // Mode State (Internal to allow switching during chat)
+  const [activeMode, setActiveMode] = useState<ChatMode>(initialMode);
   
   // Video Controls
   const [isMicOn, setIsMicOn] = useState(true);
@@ -33,15 +42,29 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, chatState]);
+  }, [messages, chatState, activeMode]);
 
   // Initial auto-start
   useEffect(() => {
-    handleStartChat();
+    if (targetUser) {
+        // Direct Chat Mode: Immediately connected
+        setChatState(ChatState.CONNECTED);
+        setActiveMode(initialMode);
+        // Add fake history or system msg
+        setMessages([{
+            id: 'sys_1',
+            text: 'مكالمة مشفرة بين الطرفين.',
+            sender: 'system',
+            timestamp: Date.now()
+        }]);
+    } else {
+        // Random Chat Mode
+        handleStartChat();
+    }
     return () => {
         realtimeService.disconnect();
     };
-  }, []);
+  }, [targetUser]); // Run when targetUser changes or mounts
 
   // Camera handling for Video Mode with ROBUST FIX & MOCK Fallback
   useEffect(() => {
@@ -93,7 +116,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
         }
     };
 
-    if (mode === 'video' && chatState !== ChatState.SEARCHING) {
+    if (activeMode === 'video' && chatState !== ChatState.SEARCHING) {
         if (isCamOn && !cameraError && !streamRef.current && !isMockCam) {
              startCamera();
         } else if (!isCamOn && streamRef.current) {
@@ -111,7 +134,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
             streamRef.current = null;
         }
     };
-  }, [mode, chatState, isCamOn]);
+  }, [activeMode, chatState, isCamOn]);
 
   const handleStartChat = () => {
     setChatState(ChatState.SEARCHING);
@@ -164,7 +187,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
   };
 
   const handleSend = () => {
-    if (!input.trim() || chatState !== ChatState.CONNECTED) return;
+    // ALWAYS ALLOW SENDING (No check for chatState)
+    if (!input.trim()) return;
 
     const userMsg: Message = {
       id: Date.now().toString(),
@@ -175,7 +199,20 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
 
     setMessages(prev => [...prev, userMsg]);
     setInput('');
-    realtimeService.sendMessage(userMsg.text);
+    
+    if (!targetUser) {
+        realtimeService.sendMessage(userMsg.text);
+    } else {
+        // Simulate reply for direct message
+        setTimeout(() => {
+             setMessages(prev => [...prev, {
+                id: Date.now().toString(),
+                text: '👍',
+                sender: 'other',
+                timestamp: Date.now()
+             }]);
+        }, 2000);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -183,6 +220,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
       e.preventDefault();
       handleSend();
     }
+  };
+
+  const toggleCallMode = () => {
+      setActiveMode(prev => prev === 'text' ? 'video' : 'text');
   };
 
   // Searching View
@@ -193,7 +234,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
             <div className="absolute inset-0 border-4 border-gray-800 rounded-full"></div>
             <div className="absolute inset-0 border-4 border-t-[#0095f6] rounded-full animate-spin"></div>
             <div className="absolute inset-0 flex items-center justify-center">
-                 <span className="text-4xl">{mode === 'video' ? '🎥' : '🕵️'}</span>
+                 <span className="text-4xl">{activeMode === 'video' ? '🎥' : '🕵️'}</span>
             </div>
         </div>
         <div className="text-center space-y-2">
@@ -212,100 +253,188 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
     );
   }
 
+  // Common Input Component for reusability with style props
+  const ChatInput = ({ isOverlay = false }) => (
+    <div className={`flex items-center gap-2 ${isOverlay ? 'w-full' : 'p-3 bg-[#121212] border-t border-ig-darkSec'}`}>
+        <div className={`flex-1 flex items-center rounded-3xl px-4 py-2 border transition-all ${
+            isOverlay 
+            ? 'bg-black/40 backdrop-blur-md border-white/10 hover:bg-black/60' 
+            : `bg-[#262626] border-transparent focus-within:border-gray-500`
+        }`}>
+            <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                // Disabled attribute removed to allow typing anytime
+                placeholder={STRINGS.typeMessage}
+                className="bg-transparent border-none outline-none text-white w-full placeholder-gray-400 text-sm h-7"
+            />
+        </div>
+        <button 
+            onClick={handleSend}
+            // Disabled attribute updated to only check for empty input
+            disabled={!input.trim()}
+            className={`p-2 rounded-full transition-colors flex-shrink-0 shadow-lg ${
+                input.trim()
+                ? 'bg-[#0095f6] text-white hover:bg-[#0085dd]' 
+                : isOverlay ? 'bg-black/40 text-gray-500' : 'bg-[#262626] text-gray-600'
+            }`}
+        >
+            <Send className="w-5 h-5 rtl:rotate-180" />
+        </button>
+    </div>
+  );
+
   return (
     <div className="flex flex-col h-full bg-black relative">
       {/* Header */}
-      <div className={`flex items-center justify-between px-4 py-3 z-20 sticky top-0 ${mode === 'video' ? 'bg-black/80 backdrop-blur-md absolute w-full border-b-0 top-0 left-0 right-0' : 'bg-[#121212] border-b border-ig-darkSec shadow-md'}`}>
+      <div className={`flex items-center justify-between px-4 py-3 z-20 sticky top-0 ${activeMode === 'video' ? 'bg-black/80 backdrop-blur-md absolute w-full border-b-0 top-0 left-0 right-0' : 'bg-[#121212] border-b border-ig-darkSec shadow-md'}`}>
         <div className="flex items-center space-x-3 space-x-reverse">
           <button onClick={() => { realtimeService.disconnect(); onBack(); }} className="p-1 hover:bg-gray-800 rounded-full bg-black/40 text-white">
             <ArrowRight className="w-6 h-6" />
           </button>
           
-          {mode === 'text' && (
+          {/* User Info Display */}
+          {(activeMode === 'text' || targetUser) && (
               <>
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center border border-gray-600">
-                    <span className="text-xl">👤</span>
+                <div className="relative">
+                    {targetUser ? (
+                        <img src={targetUser.avatar} className="w-10 h-10 rounded-full border border-gray-600 object-cover" />
+                    ) : (
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center border border-gray-600">
+                            <span className="text-xl">👤</span>
+                        </div>
+                    )}
+                    {targetUser?.isActive && (
+                        <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-[#121212]"></div>
+                    )}
                 </div>
                 <div>
-                    <h3 className="font-bold text-base text-white">{STRINGS.stranger}</h3>
-                    {chatState === ChatState.CONNECTED && (
+                    <h3 className="font-bold text-base text-white">{targetUser ? targetUser.name : STRINGS.stranger}</h3>
+                    {chatState === ChatState.CONNECTED && !targetUser && (
                         <span className="text-xs text-green-500 flex items-center gap-1">
                             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
                             متصل الآن
                         </span>
+                    )}
+                     {targetUser && (
+                        <span className="text-xs text-gray-400 block -mt-0.5">{targetUser.isActive ? 'نشط الآن' : 'غير متصل'}</span>
                     )}
                 </div>
               </>
           )}
         </div>
 
-        <button 
-            onClick={handleStopClick}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm transition-all duration-200 shadow-lg ${
-                chatState === ChatState.DISCONNECTED 
-                ? 'bg-[#0095f6] hover:bg-[#0085dd] text-white' 
-                : stopConfirm 
-                    ? 'bg-red-600 hover:bg-red-700 text-white animate-pulse' 
-                    : 'bg-white text-black hover:bg-gray-200'
-            }`}
-        >
-            {chatState === ChatState.DISCONNECTED ? (
+        {/* Action Buttons */}
+        <div className="flex items-center gap-3">
+            {targetUser && activeMode === 'text' && (
                 <>
-                    <RotateCw className="w-4 h-4" />
-                    <span>{STRINGS.newChat}</span>
-                </>
-            ) : stopConfirm ? (
-                <>
-                    <AlertCircle className="w-4 h-4" />
-                    <span>{STRINGS.reallyStop}</span>
-                </>
-            ) : (
-                <>
-                    <Square className="w-4 h-4 fill-current" />
-                    <span>{STRINGS.stop}</span>
+                    <button className="p-2 text-white hover:bg-gray-800 rounded-full transition-colors">
+                        <Phone className="w-6 h-6" />
+                    </button>
+                    <button onClick={toggleCallMode} className="p-2 text-white hover:bg-gray-800 rounded-full transition-colors">
+                        <VideoIcon className="w-6 h-6" />
+                    </button>
                 </>
             )}
-        </button>
+
+            {!targetUser ? (
+                <button 
+                    onClick={handleStopClick}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm transition-all duration-200 shadow-lg ${
+                        chatState === ChatState.DISCONNECTED 
+                        ? 'bg-[#0095f6] hover:bg-[#0085dd] text-white' 
+                        : stopConfirm 
+                            ? 'bg-red-600 hover:bg-red-700 text-white animate-pulse' 
+                            : 'bg-white text-black hover:bg-gray-200'
+                    }`}
+                >
+                    {chatState === ChatState.DISCONNECTED ? (
+                        <>
+                            <RotateCw className="w-4 h-4" />
+                            <span>{STRINGS.newChat}</span>
+                        </>
+                    ) : stopConfirm ? (
+                        <>
+                            <AlertCircle className="w-4 h-4" />
+                            <span>{STRINGS.reallyStop}</span>
+                        </>
+                    ) : (
+                        <>
+                            <Square className="w-4 h-4 fill-current" />
+                            <span>{STRINGS.stop}</span>
+                        </>
+                    )}
+                </button>
+            ) : activeMode === 'video' && (
+                 <button 
+                    onClick={toggleCallMode}
+                    className="p-2 bg-red-600 rounded-full text-white hover:bg-red-700"
+                 >
+                     <Phone className="w-5 h-5 fill-white rotate-[135deg]" />
+                 </button>
+            )}
+        </div>
       </div>
 
       {/* Content Area */}
-      {mode === 'video' ? (
+      {activeMode === 'video' ? (
         // === VIDEO MODE LAYOUT ===
         <div className="flex-1 flex flex-col min-h-0 relative bg-gray-900">
             
-            {/* 1. STRANGER VIEW (TOP HALF) */}
+            {/* 1. REMOTE VIEW (TOP HALF) */}
             <div className="flex-1 relative overflow-hidden bg-[#1a1a1a]">
                 {chatState === ChatState.CONNECTED ? (
                      <div className="w-full h-full relative">
-                         <img 
-                            src={`https://picsum.photos/seed/${chatId}/500/700`} 
-                            alt="Stranger" 
-                            className="w-full h-full object-cover"
-                         />
-                         <div className="absolute inset-0 bg-black/10"></div>
+                         {/* If mock chat with specific user, use their avatar as placeholder or video */}
+                         {targetUser ? (
+                             <img 
+                                src={targetUser.avatar} 
+                                alt={targetUser.name} 
+                                className="w-full h-full object-cover blur-sm"
+                             />
+                         ) : (
+                             <img 
+                                src={`https://picsum.photos/seed/${chatId}/500/700`} 
+                                alt="Stranger" 
+                                className="w-full h-full object-cover"
+                             />
+                         )}
+                         <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                             {targetUser && (
+                                <div className="text-center animate-pulse">
+                                    <img src={targetUser.avatar} className="w-24 h-24 rounded-full border-4 border-gray-800 mx-auto mb-4" />
+                                    <h2 className="text-2xl font-bold">{targetUser.name}</h2>
+                                    <p className="text-gray-300">جاري الاتصال...</p>
+                                </div>
+                             )}
+                         </div>
                      </div>
                 ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-500 bg-black">
                         <div className="text-center">
                            <VideoIcon className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                           <p>الغريب غير متصل</p>
+                           <p>الطرف الآخر غير متصل</p>
                         </div>
                     </div>
                 )}
                 
-                <div className="absolute top-16 left-4 bg-black/60 px-3 py-1 rounded-md text-xs font-bold text-white backdrop-blur-sm flex items-center gap-2 z-10">
-                    <span>{STRINGS.stranger}</span>
-                    {chatState === ChatState.CONNECTED && <span className="w-2 h-2 rounded-full bg-green-500"></span>}
-                </div>
+                {!targetUser && (
+                    <div className="absolute top-16 left-4 bg-black/60 px-3 py-1 rounded-md text-xs font-bold text-white backdrop-blur-sm flex items-center gap-2 z-10">
+                        <span>{STRINGS.stranger}</span>
+                        {chatState === ChatState.CONNECTED && <span className="w-2 h-2 rounded-full bg-green-500"></span>}
+                    </div>
+                )}
 
                 {/* Messages Overlay */}
-                <div className="absolute bottom-0 left-0 right-0 top-1/4 bg-gradient-to-t from-black via-black/50 to-transparent px-4 pb-20 flex flex-col justify-end overflow-y-auto no-scrollbar pointer-events-none z-10">
+                <div className="absolute bottom-0 left-0 right-0 top-1/4 bg-gradient-to-t from-black via-black/50 to-transparent px-4 pb-10 flex flex-col justify-end overflow-y-auto no-scrollbar pointer-events-none z-10">
                      {messages.map((msg) => (
                          <div key={msg.id} className={`mb-2 px-3 py-2 rounded-xl max-w-[85%] text-sm backdrop-blur-md shadow-sm pointer-events-auto transition-all ${
                              msg.sender === 'system' ? 'self-center bg-gray-800/80 text-gray-300 text-xs py-1' :
                              msg.sender === 'me' ? 'self-end bg-[#0095f6]/80 text-white rounded-br-none' : 'self-start bg-white/20 text-white rounded-bl-none border border-white/10'
                          }`}>
-                             {msg.sender !== 'system' && <span className="block text-[10px] opacity-70 mb-0.5">{msg.sender === 'me' ? 'أنت' : 'غريب'}</span>}
+                             {msg.sender !== 'system' && <span className="block text-[10px] opacity-70 mb-0.5">{msg.sender === 'me' ? 'أنت' : (targetUser ? targetUser.name : 'غريب')}</span>}
                              {msg.text}
                          </div>
                      ))}
@@ -361,7 +490,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
                      أنت
                  </div>
 
-                 {/* Local Controls Overlay */}
+                 {/* Local Controls Overlay (Top Right) */}
                  <div className="absolute top-4 right-4 flex flex-col gap-3 z-20">
                      <button onClick={() => setIsMicOn(!isMicOn)} className={`p-3 rounded-full backdrop-blur-md shadow-lg border border-white/10 transition-all ${isMicOn ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-red-500/80 text-white'}`}>
                         {isMicOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
@@ -370,73 +499,64 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode }) => {
                         {isCamOn && !cameraError ? <Camera className="w-5 h-5" /> : <CameraOff className="w-5 h-5" />}
                      </button>
                  </div>
+
+                 {/* New Input Area Overlay (Bottom) for Video Mode */}
+                 <div className="absolute bottom-4 left-4 right-4 z-30 animate-in slide-in-from-bottom-4">
+                     <ChatInput isOverlay={true} />
+                 </div>
             </div>
 
         </div>
       ) : (
         // === TEXT MODE LAYOUT ===
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar bg-black">
-            {messages.map((msg) => {
-                if (msg.sender === 'system') {
+        <>
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar bg-black">
+                {messages.map((msg) => {
+                    if (msg.sender === 'system') {
+                        return (
+                            <div key={msg.id} className="flex justify-center my-4">
+                                <span className="bg-[#262626] text-gray-400 text-xs px-3 py-1 rounded-full border border-gray-800">
+                                    {msg.text}
+                                </span>
+                            </div>
+                        );
+                    }
                     return (
-                        <div key={msg.id} className="flex justify-center my-4">
-                            <span className="bg-[#262626] text-gray-400 text-xs px-3 py-1 rounded-full border border-gray-800">
-                                {msg.text}
-                            </span>
+                        <div 
+                            key={msg.id} 
+                            className={`flex flex-col ${msg.sender === 'me' ? 'items-end' : 'items-start'}`}
+                        >
+                            {/* Only show sender name if random chat or system needed, usually in direct chat we know who it is */}
+                            {!targetUser && (
+                                <span className={`text-[10px] mb-1 px-1 ${msg.sender === 'me' ? 'text-blue-400' : 'text-red-400'}`}>
+                                    {msg.sender === 'me' ? 'أنت' : STRINGS.stranger}
+                                </span>
+                            )}
+                            <div 
+                            className={`max-w-[80%] px-4 py-3 rounded-2xl text-[15px] leading-snug break-words shadow-sm ${
+                                msg.sender === 'me' 
+                                ? 'bg-[#0095f6] text-white rounded-br-none' 
+                                : 'bg-[#262626] text-white rounded-bl-none border border-gray-800'
+                            }`}
+                            >
+                            {msg.text}
+                            </div>
                         </div>
                     );
-                }
-                return (
-                    <div 
-                        key={msg.id} 
-                        className={`flex flex-col ${msg.sender === 'me' ? 'items-end' : 'items-start'}`}
-                    >
-                        <span className={`text-[10px] mb-1 px-1 ${msg.sender === 'me' ? 'text-blue-400' : 'text-red-400'}`}>
-                            {msg.sender === 'me' ? 'أنت' : STRINGS.stranger}
-                        </span>
-                        <div 
-                        className={`max-w-[80%] px-4 py-3 rounded-2xl text-[15px] leading-snug break-words shadow-sm ${
-                            msg.sender === 'me' 
-                            ? 'bg-[#0095f6] text-white rounded-br-none' 
-                            : 'bg-[#262626] text-white rounded-bl-none border border-gray-800'
-                        }`}
-                        >
-                        {msg.text}
-                        </div>
+                })}
+                
+                {chatState === ChatState.DISCONNECTED && (
+                    <div className="flex flex-col items-center justify-center py-6 space-y-3 opacity-80">
+                        <p className="text-gray-500 font-medium">لقد غادر الطرف الآخر المحادثة.</p>
                     </div>
-                );
-            })}
+                )}
+                <div ref={messagesEndRef} />
+            </div>
             
-            {chatState === ChatState.DISCONNECTED && (
-                <div className="flex flex-col items-center justify-center py-6 space-y-3 opacity-80">
-                    <p className="text-gray-500 font-medium">لقد غادر الغريب المحادثة.</p>
-                </div>
-            )}
-            <div ref={messagesEndRef} />
-        </div>
+            {/* Input Area for Text Mode (Fixed at bottom) */}
+            <ChatInput />
+        </>
       )}
-
-      {/* Input Area */}
-      <div className={`p-3 flex items-center gap-3 z-30 transition-all ${mode === 'video' ? 'bg-black/80 backdrop-blur-lg border-t border-white/10 absolute bottom-0 w-full' : 'bg-[#121212] border-t border-ig-darkSec'}`}>
-        <div className={`flex-1 flex items-center bg-[#262626] rounded-3xl px-4 py-2 border ${chatState === ChatState.CONNECTED ? 'border-transparent focus-within:border-gray-500' : 'border-red-900/50 opacity-50 cursor-not-allowed'}`}>
-            <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                disabled={chatState !== ChatState.CONNECTED}
-                placeholder={chatState === ChatState.CONNECTED ? STRINGS.typeMessage : 'المحادثة منتهية'}
-                className="bg-transparent border-none outline-none text-white w-full placeholder-gray-400 text-sm h-7"
-            />
-        </div>
-        <button 
-            onClick={handleSend}
-            disabled={!input.trim() || chatState !== ChatState.CONNECTED}
-            className={`p-2 rounded-full transition-colors ${input.trim() && chatState === ChatState.CONNECTED ? 'bg-[#0095f6] text-white hover:bg-[#0085dd]' : 'bg-[#262626] text-gray-600'}`}
-        >
-            <Send className="w-5 h-5 rtl:rotate-180" />
-        </button>
-      </div>
     </div>
   );
 };
