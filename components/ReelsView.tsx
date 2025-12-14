@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Heart, MessageCircle, Share2, MoreHorizontal, Music, Link as LinkIcon, Send, Play, Check, X, Volume2, VolumeX, EyeOff, Search, Pin, Flag, Trash2, Copy, ChevronDown, ChevronUp, AlertCircle, AtSign, Smile, Reply } from 'lucide-react';
+import { Heart, MessageCircle, Share2, MoreHorizontal, Music, Link as LinkIcon, Send, Play, Check, X, Volume2, VolumeX, EyeOff, Search, Pin, Flag, Trash2, Copy, ChevronDown, ChevronUp, AlertCircle, AtSign, Smile, Reply, Mail, MessageSquare, Facebook, Twitter, Ghost, Linkedin, Plus } from 'lucide-react';
 import { Reel } from '../types';
 
 interface ReelsViewProps {
@@ -28,6 +28,27 @@ interface HeartAnim {
     rotation: number;
 }
 
+// Custom Icon for Comment with 3 Dots
+const MessageDots = ({ size, strokeWidth, className }: any) => (
+    <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        width={size || 24} 
+        height={size || 24} 
+        viewBox="0 0 24 24" 
+        fill="none" 
+        stroke="currentColor" 
+        strokeWidth={strokeWidth || 2} 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+        className={className}
+    >
+        <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
+        <path d="M8 12h.01" />
+        <path d="M12 12h.01" />
+        <path d="M16 12h.01" />
+    </svg>
+);
+
 // Emoji Data
 const QUICK_EMOJIS = ["❤️", "😂", "😱", "👏", "🔥", "😭", "😍", "😡"];
 const EMOJI_CATEGORIES = {
@@ -37,7 +58,7 @@ const EMOJI_CATEGORIES = {
     "عام": ["👍", "👎", "🤍", "💙", "😎", "🤔", "👋", "✅"]
 };
 
-// Mock users for search feature
+// Mock users for search feature - Expanded list for scrolling demo
 const INITIAL_SUGGESTED_USERS = [
   { id: 1, username: 'ali_gamer', name: 'Ali Hassan', avatar: 'https://picsum.photos/50/50?random=101', isFollowing: false },
   { id: 2, username: 'nour_beauty', name: 'Nour Style', avatar: 'https://picsum.photos/50/50?random=102', isFollowing: true },
@@ -45,6 +66,12 @@ const INITIAL_SUGGESTED_USERS = [
   { id: 4, username: 'chef_om', name: 'Chef Omar', avatar: 'https://picsum.photos/50/50?random=104', isFollowing: false },
   { id: 5, username: 'travel_jo', name: 'Jordan Travels', avatar: 'https://picsum.photos/50/50?random=105', isFollowing: false },
   { id: 6, username: 'sport_life', name: 'Captain Majed', avatar: 'https://picsum.photos/50/50?random=106', isFollowing: false },
+  { id: 7, username: 'gamer_pro', name: 'Pro Gamer', avatar: 'https://picsum.photos/50/50?random=107', isFollowing: false },
+  { id: 8, username: 'food_lover', name: 'Tasty Food', avatar: 'https://picsum.photos/50/50?random=108', isFollowing: false },
+  { id: 9, username: 'music_dj', name: 'DJ Ahmed', avatar: 'https://picsum.photos/50/50?random=109', isFollowing: false },
+  { id: 10, username: 'art_design', name: 'Design Hub', avatar: 'https://picsum.photos/50/50?random=110', isFollowing: false },
+  { id: 11, username: 'funny_memes', name: 'Memes Daily', avatar: 'https://picsum.photos/50/50?random=111', isFollowing: false },
+  { id: 12, username: 'news_24', name: 'News 24', avatar: 'https://picsum.photos/50/50?random=112', isFollowing: false },
 ];
 
 const ReelsView: React.FC<ReelsViewProps> = ({ reels, onLoadMore }) => {
@@ -206,9 +233,9 @@ const ReelsView: React.FC<ReelsViewProps> = ({ reels, onLoadMore }) => {
             reel={reel} 
             isActive={activeReelId === reel.id} 
             isMuted={isMutedGlobal}
-            // Toggle now handled by parent state updater, but we keep prop if ReelItem needs to invoke it elsewhere (though we removed the button)
             toggleMute={() => setIsMutedGlobal(!isMutedGlobal)}
             isSearchOpen={isSearchOpen}
+            suggestedUsers={INITIAL_SUGGESTED_USERS}
           />
         ))}
         {/* Loading Indicator at bottom */}
@@ -226,9 +253,10 @@ interface ReelItemProps {
     isMuted: boolean;
     toggleMute: () => void;
     isSearchOpen: boolean;
+    suggestedUsers: any[];
 }
 
-const ReelItem: React.FC<ReelItemProps> = ({ reel, isActive, isMuted, toggleMute, isSearchOpen }) => {
+const ReelItem: React.FC<ReelItemProps> = ({ reel, isActive, isMuted, toggleMute, isSearchOpen, suggestedUsers }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const clickTimeoutRef = useRef<any>(null); // Ref for single click timeout
   
@@ -246,6 +274,9 @@ const ReelItem: React.FC<ReelItemProps> = ({ reel, isActive, isMuted, toggleMute
   const [replyingTo, setReplyingTo] = useState<Comment | null>(null);
   const [expandedReplies, setExpandedReplies] = useState<Set<string>>(new Set());
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+  // Description State
+  const [isDescExpanded, setIsDescExpanded] = useState(false);
   
   // Initial Comments with Threading & Pinning
   const [comments, setComments] = useState<Comment[]>([
@@ -300,6 +331,7 @@ const ReelItem: React.FC<ReelItemProps> = ({ reel, isActive, isMuted, toggleMute
   const [shareCount, setShareCount] = useState(reel.shares);
   const [sentUsers, setSentUsers] = useState<number[]>([]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [shareSearch, setShareSearch] = useState('');
 
   // More Options State
   const [showMoreOptions, setShowMoreOptions] = useState(false);
@@ -473,6 +505,7 @@ const ReelItem: React.FC<ReelItemProps> = ({ reel, isActive, isMuted, toggleMute
       setExpandedReplies(newSet);
   };
 
+  // --- SHARE LOGIC ---
   const handleNativeShare = async () => {
       if (navigator.share) {
           try {
@@ -496,11 +529,18 @@ const ReelItem: React.FC<ReelItemProps> = ({ reel, isActive, isMuted, toggleMute
           setSentUsers(prev => prev.filter(uid => uid !== id));
       } else {
           setSentUsers(prev => [...prev, id]);
+          // Simulate sending toast only on adding
           if (!sentUsers.includes(id)) {
               setShareCount(prev => prev + 1);
+              showToast('تم الإرسال');
           }
       }
   };
+
+  const filteredShareUsers = suggestedUsers.filter(u => 
+      u.username.toLowerCase().includes(shareSearch.toLowerCase()) || 
+      u.name.toLowerCase().includes(shareSearch.toLowerCase())
+  );
 
   const handleNotInterested = () => {
       setIsHidden(true);
@@ -518,7 +558,7 @@ const ReelItem: React.FC<ReelItemProps> = ({ reel, isActive, isMuted, toggleMute
   }
 
   // --- Subcomponent for Single Comment Row ---
-  const CommentRow = ({ comment, isReply = false, parentId }: { comment: Comment, isReply?: boolean, parentId?: string }) => (
+  const CommentRow: React.FC<{ comment: Comment, isReply?: boolean, parentId?: string }> = ({ comment, isReply = false, parentId }) => (
       <div 
         className={`flex gap-3 py-3 animate-in slide-in-from-bottom-2 duration-300 ${isReply ? 'ml-10' : ''} ${selectedComment?.id === comment.id ? 'bg-gray-800/30 rounded-lg -mx-2 px-2' : ''} ${comment.isPinned ? 'bg-[#0095f6]/10 rounded-lg -mx-2 px-2 border-l-2 border-[#0095f6]' : ''}`}
         onContextMenu={(e) => { e.preventDefault(); setSelectedComment(comment); }}
@@ -609,9 +649,6 @@ const ReelItem: React.FC<ReelItemProps> = ({ reel, isActive, isMuted, toggleMute
           </div>
       )}
 
-      {/* --- Mute Indicator REMOVED FROM HERE --- */}
-      {/* Was here previously at top-16 right-4 */}
-
       {/* --- TikTok Style Flying Hearts --- */}
       {hearts.map(heart => (
           <div 
@@ -652,10 +689,11 @@ const ReelItem: React.FC<ReelItemProps> = ({ reel, isActive, isMuted, toggleMute
       <div className="absolute inset-0 flex flex-col justify-end p-4 pb-20 bg-gradient-to-b from-transparent via-transparent to-black/80 pointer-events-none">
           <div className="flex justify-between items-end pointer-events-auto">
               
+              {/* Bottom Left: Username, Follow Button, Description */}
               <div className="flex flex-col space-y-3 max-w-[80%] mb-2">
                   <div className="flex items-center space-x-2 space-x-reverse">
-                       <img src={reel.userAvatar} className="w-9 h-9 rounded-full border border-white" />
-                       <span className="font-bold text-white text-sm shadow-black drop-shadow-md">{reel.username}</span>
+                       {/* AVATAR REMOVED FROM HERE */}
+                       <span className="font-bold text-white text-lg shadow-black drop-shadow-md">{reel.username}</span>
                        <button 
                             onClick={(e) => { e.stopPropagation(); setIsFollowing(!isFollowing); }}
                             className={`border transition-all duration-300 text-[10px] px-2 py-0.5 rounded backdrop-blur-sm ${
@@ -669,11 +707,22 @@ const ReelItem: React.FC<ReelItemProps> = ({ reel, isActive, isMuted, toggleMute
                   </div>
                   
                   <div className="space-y-1">
-                      <p className="text-sm text-white leading-tight drop-shadow-md line-clamp-2">
-                          {reel.description}
-                      </p>
-                      {reel.tags && reel.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
+                      <div className="relative">
+                          <p className={`text-sm text-white leading-tight drop-shadow-md ${isDescExpanded ? '' : 'line-clamp-1'}`}>
+                              {reel.description}
+                          </p>
+                          {!isDescExpanded && (
+                              <button
+                                  onClick={(e) => { e.stopPropagation(); setIsDescExpanded(true); }}
+                                  className="text-gray-400 font-semibold text-xs mt-0.5 hover:text-white"
+                              >
+                                  ... المزيد
+                              </button>
+                          )}
+                      </div>
+                      
+                      {isDescExpanded && reel.tags && reel.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 animate-in fade-in">
                               {reel.tags.map((tag, i) => (
                                   <span key={i} className="text-xs font-bold text-white drop-shadow-md">#{tag}</span>
                               ))}
@@ -681,13 +730,17 @@ const ReelItem: React.FC<ReelItemProps> = ({ reel, isActive, isMuted, toggleMute
                       )}
                   </div>
 
-                  <div className="flex items-center gap-2 text-white text-xs">
-                       <Music className="w-3 h-3 animate-spin-slow" />
-                       <span>صوت أصلي - {reel.username}</span>
-                  </div>
+                  {/* Audio Info Removed as requested */}
               </div>
 
-              <div className="flex flex-col items-center space-y-5 pb-2">
+              {/* Right Sidebar: Avatar, Like, Comment, Share */}
+              <div className="flex flex-col items-center space-y-3 pb-2">
+                  
+                  {/* --- AVATAR MOVED HERE (Above Like Button) --- */}
+                  <div className="relative mb-1 cursor-pointer transition-transform hover:scale-110">
+                     <img src={reel.userAvatar} className="w-12 h-12 rounded-full border-2 border-white object-cover shadow-lg" />
+                  </div>
+
                   <div 
                     className="flex flex-col items-center gap-1 cursor-pointer" 
                     onClick={(e) => { e.stopPropagation(); setIsLiked(!isLiked); setLikesCount(p => isLiked ? p-1 : p+1); }}
@@ -703,7 +756,7 @@ const ReelItem: React.FC<ReelItemProps> = ({ reel, isActive, isMuted, toggleMute
                   </div>
 
                   <ActionBtn 
-                      icon={<MessageCircle className="text-white" />} 
+                      icon={<MessageDots className="text-white" />} 
                       text={reel.comments} 
                       onClick={(e: React.MouseEvent) => { e.stopPropagation(); setShowComments(true); }} 
                   />
@@ -917,45 +970,106 @@ const ReelItem: React.FC<ReelItemProps> = ({ reel, isActive, isMuted, toggleMute
             onClick={(e) => { e.stopPropagation(); setShowShare(false); }}
         >
             <div 
-                className="bg-[#1c1c1c] w-full rounded-t-2xl p-4 flex flex-col animate-in slide-in-from-bottom duration-300 gap-4"
+                className="bg-[#1c1c1c] w-full rounded-t-2xl p-4 flex flex-col animate-in slide-in-from-bottom duration-300 gap-4 max-h-[70vh]"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex justify-center"><div className="w-10 h-1 bg-gray-500 rounded-full"></div></div>
+
+                {/* Search in Share Sheet */}
+                <div className="relative">
+                    <Search className="absolute right-3 top-2.5 w-4 h-4 text-gray-400" />
+                    <input 
+                        type="text"
+                        value={shareSearch}
+                        onChange={(e) => setShareSearch(e.target.value)}
+                        placeholder="بحث عن أشخاص..."
+                        className="w-full bg-[#262626] rounded-xl py-2 pr-9 pl-3 text-sm text-white placeholder-gray-400 outline-none focus:bg-[#333] transition-colors"
+                    />
+                </div>
                 
-                {/* Internal Messaging */}
-                <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 px-1">
-                    {[1,2,3,4,5].map(i => {
-                        const isSent = sentUsers.includes(i);
+                {/* Internal User List (UPDATED: Vertical Grid for "Up and Down" feeling) */}
+                <div className="grid grid-cols-4 gap-4 overflow-y-auto no-scrollbar max-h-[250px] py-2 px-1">
+                    {filteredShareUsers.length > 0 ? filteredShareUsers.map(user => {
+                        const isSent = sentUsers.includes(user.id);
                         return (
-                            <div key={i} className="flex flex-col items-center gap-2 min-w-[64px] cursor-pointer" onClick={(e) => { e.stopPropagation(); toggleSendToUser(i); }}>
-                                <div className="w-12 h-12 rounded-full bg-gray-700 overflow-hidden border border-gray-600 relative">
-                                    <img src={`https://picsum.photos/50/50?random=${i+200}`} className={`w-full h-full object-cover transition-opacity ${isSent ? 'opacity-50' : ''}`} />
+                            <div key={user.id} className="flex flex-col items-center gap-2 cursor-pointer group" onClick={(e) => { e.stopPropagation(); toggleSendToUser(user.id); }}>
+                                <div className="w-14 h-14 rounded-full bg-gray-700 overflow-hidden border border-gray-600 relative group-hover:scale-105 transition-transform">
+                                    <img src={user.avatar} className={`w-full h-full object-cover transition-opacity ${isSent ? 'opacity-50' : ''}`} />
                                     {isSent && (
                                         <div className="absolute inset-0 flex items-center justify-center bg-black/40">
                                             <Check className="w-6 h-6 text-white" />
                                         </div>
                                     )}
                                 </div>
-                                <span className="text-[10px] text-gray-300 truncate w-full text-center">User {i}</span>
+                                <span className="text-[10px] text-gray-300 truncate w-full text-center">{user.name.split(' ')[0]}</span>
                                 <button 
-                                    className={`text-[10px] px-3 py-1 rounded-full transition-all duration-300 font-bold ${
+                                    className={`text-[10px] px-3 py-1 rounded-full transition-all duration-300 font-bold w-full ${
                                         isSent ? 'bg-gray-700 text-gray-400' : 'bg-[#0095f6] text-white hover:bg-[#0085dd]'
                                     }`}
                                 >
-                                    {isSent ? 'تم الإرسال' : 'إرسال'}
+                                    {isSent ? 'تم' : 'إرسال'}
                                 </button>
                             </div>
                         );
-                    })}
+                    }) : (
+                        <div className="col-span-4 text-center text-xs text-gray-500 py-2">لا يوجد مستخدمين</div>
+                    )}
                 </div>
 
                 <div className="h-px bg-gray-700"></div>
 
-                {/* External Actions */}
-                <div className="flex gap-4 overflow-x-auto no-scrollbar px-1">
+                {/* External Actions - UPDATED LIST */}
+                <div className="flex gap-6 overflow-x-auto no-scrollbar px-1 pb-4">
                     <ShareOption icon={<LinkIcon />} label="نسخ الرابط" onClick={handleCopyLink} />
-                    <ShareOption icon={<Send className="-rotate-45" />} label="Telegram" onClick={() => { window.open(`https://t.me/share/url?url=https://nel.app/v/${reel.id}`, '_blank'); }} />
-                    <ShareOption icon={<MessageCircle />} label="WhatsApp" onClick={() => { window.open(`https://wa.me/?text=Check this video: https://nel.app/v/${reel.id}`, '_blank'); }} />
+                    <ShareOption 
+                        icon={<MessageCircle className="text-white fill-[#0095f6]" />} 
+                        label="Messenger" 
+                        bgColor="bg-[#0095f6]"
+                        onClick={() => { window.open(`fb-messenger://share?link=https://nel.app/v/${reel.id}`, '_blank'); }} 
+                    />
+                     <ShareOption 
+                        icon={<MessageCircle className="text-white fill-[#25D366]" />} 
+                        label="WhatsApp" 
+                        bgColor="bg-[#25D366]"
+                        onClick={() => { window.open(`https://wa.me/?text=Check this video: https://nel.app/v/${reel.id}`, '_blank'); }} 
+                    />
+                    <ShareOption 
+                        icon={<Ghost className="text-white fill-transparent" />} 
+                        label="Snapchat" 
+                        bgColor="bg-[#FFFC00]"
+                        iconColor="text-black"
+                        onClick={() => { }} 
+                    />
+                    <ShareOption 
+                        icon={<Facebook className="text-white fill-white" />} 
+                        label="Facebook" 
+                        bgColor="bg-[#1877F2]"
+                        onClick={() => { window.open(`https://www.facebook.com/sharer/sharer.php?u=https://nel.app/v/${reel.id}`, '_blank'); }} 
+                    />
+                     <ShareOption 
+                        icon={<Twitter className="text-white fill-white" />} 
+                        label="X" 
+                        bgColor="bg-black"
+                        onClick={() => { window.open(`https://twitter.com/intent/tweet?url=https://nel.app/v/${reel.id}`, '_blank'); }} 
+                    />
+                     <ShareOption 
+                        icon={<Linkedin className="text-white fill-white" />} 
+                        label="LinkedIn" 
+                        bgColor="bg-[#0077b5]"
+                        onClick={() => { window.open(`https://www.linkedin.com/sharing/share-offsite/?url=https://nel.app/v/${reel.id}`, '_blank'); }} 
+                    />
+                    <ShareOption 
+                        icon={<Send className="text-white fill-white -rotate-45 mb-1 mr-1" />} 
+                        label="Telegram" 
+                        bgColor="bg-[#229ED9]"
+                        onClick={() => { window.open(`https://t.me/share/url?url=https://nel.app/v/${reel.id}`, '_blank'); }} 
+                    />
+                    <ShareOption 
+                        icon={<MessageSquare className="text-white fill-white" />} 
+                        label="SMS" 
+                        bgColor="bg-[#4CD964]"
+                        onClick={() => { window.open(`sms:?body=Check this video: https://nel.app/v/${reel.id}`, '_blank'); }} 
+                    />
                     <ShareOption icon={<Share2 />} label="المزيد" onClick={handleNativeShare} />
                 </div>
             </div>
@@ -997,10 +1111,10 @@ const ActionBtn = ({ icon, text, onClick }: any) => (
     </div>
 );
 
-const ShareOption = ({ icon, label, onClick }: any) => (
+const ShareOption = ({ icon, label, onClick, bgColor, iconColor }: any) => (
     <div className="flex flex-col items-center gap-2 min-w-[70px] cursor-pointer group" onClick={(e) => { e.stopPropagation(); onClick && onClick(); }}>
-        <div className="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center text-white border border-gray-700 group-hover:bg-gray-700 transition-colors">
-            {React.cloneElement(icon, { size: 20 })}
+        <div className={`w-12 h-12 rounded-full flex items-center justify-center border border-gray-700 transition-transform active:scale-95 ${bgColor ? bgColor : 'bg-gray-800'}`}>
+            {React.cloneElement(icon, { size: 24, className: iconColor || 'text-white' })}
         </div>
         <span className="text-[10px] text-gray-400">{label}</span>
     </div>
