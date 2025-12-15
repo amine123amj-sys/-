@@ -23,12 +23,26 @@ export interface UserProfile {
 
 export type Tab = 'home' | 'explore' | 'create' | 'reels' | 'profile';
 
-export interface Story {
+export type StoryType = 'image' | 'video' | 'text';
+
+export interface StoryItem {
   id: string | number;
-  name: string;
-  img: string;
-  isUser: boolean;
-  videoUrl?: string; // Optional if it's a video story
+  type: StoryType;
+  url?: string; // For image/video
+  content?: string; // For text
+  background?: string; // For text background color
+  timestamp: number;
+  duration: number; // in seconds
+  viewers?: number;
+}
+
+export interface Story {
+  id: string | number; // User ID acting as Story Group ID
+  username: string;
+  avatar: string;
+  isUser: boolean; // Is current user
+  items: StoryItem[];
+  allViewed: boolean;
 }
 
 export interface Reel {

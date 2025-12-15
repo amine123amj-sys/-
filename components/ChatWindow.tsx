@@ -318,21 +318,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode: initia
                             <span className="text-xl">👤</span>
                         </div>
                     )}
-                    {targetUser?.isActive && (
-                        <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-[#121212]"></div>
-                    )}
                 </div>
                 <div>
                     <h3 className="font-bold text-base text-white">{targetUser ? targetUser.name : STRINGS.stranger}</h3>
-                    {chatState === ChatState.CONNECTED && !targetUser && (
-                        <span className="text-xs text-green-500 flex items-center gap-1">
-                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                            متصل الآن
-                        </span>
-                    )}
-                     {targetUser && (
-                        <span className="text-xs text-gray-400 block -mt-0.5">{targetUser.isActive ? 'نشط الآن' : 'غير متصل'}</span>
-                    )}
                 </div>
               </>
           )}
@@ -435,7 +423,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onBack, interests, mode: initia
                 {!targetUser && (
                     <div className="absolute top-16 left-4 bg-black/60 px-3 py-1 rounded-md text-xs font-bold text-white backdrop-blur-sm flex items-center gap-2 z-10">
                         <span>{STRINGS.stranger}</span>
-                        {chatState === ChatState.CONNECTED && <span className="w-2 h-2 rounded-full bg-green-500"></span>}
                     </div>
                 )}
 

@@ -987,39 +987,8 @@ const ReelItem: React.FC<ReelItemProps> = ({ reel, isActive, isMuted, toggleMute
                     />
                 </div>
                 
-                {/* Internal User List (UPDATED: Vertical Grid for "Up and Down" feeling) */}
-                <div className="grid grid-cols-4 gap-4 overflow-y-auto no-scrollbar max-h-[250px] py-2 px-1">
-                    {filteredShareUsers.length > 0 ? filteredShareUsers.map(user => {
-                        const isSent = sentUsers.includes(user.id);
-                        return (
-                            <div key={user.id} className="flex flex-col items-center gap-2 cursor-pointer group" onClick={(e) => { e.stopPropagation(); toggleSendToUser(user.id); }}>
-                                <div className="w-14 h-14 rounded-full bg-gray-700 overflow-hidden border border-gray-600 relative group-hover:scale-105 transition-transform">
-                                    <img src={user.avatar} className={`w-full h-full object-cover transition-opacity ${isSent ? 'opacity-50' : ''}`} />
-                                    {isSent && (
-                                        <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                                            <Check className="w-6 h-6 text-white" />
-                                        </div>
-                                    )}
-                                </div>
-                                <span className="text-[10px] text-gray-300 truncate w-full text-center">{user.name.split(' ')[0]}</span>
-                                <button 
-                                    className={`text-[10px] px-3 py-1 rounded-full transition-all duration-300 font-bold w-full ${
-                                        isSent ? 'bg-gray-700 text-gray-400' : 'bg-[#0095f6] text-white hover:bg-[#0085dd]'
-                                    }`}
-                                >
-                                    {isSent ? 'تم' : 'إرسال'}
-                                </button>
-                            </div>
-                        );
-                    }) : (
-                        <div className="col-span-4 text-center text-xs text-gray-500 py-2">لا يوجد مستخدمين</div>
-                    )}
-                </div>
-
-                <div className="h-px bg-gray-700"></div>
-
-                {/* External Actions - UPDATED LIST */}
-                <div className="flex gap-6 overflow-x-auto no-scrollbar px-1 pb-4">
+                {/* External Actions - MOVED TO TOP */}
+                <div className="flex gap-6 overflow-x-auto no-scrollbar px-1 pb-2 pt-2 border-b border-gray-800">
                     <ShareOption icon={<LinkIcon />} label="نسخ الرابط" onClick={handleCopyLink} />
                     <ShareOption 
                         icon={<MessageCircle className="text-white fill-[#0095f6]" />} 
@@ -1072,6 +1041,36 @@ const ReelItem: React.FC<ReelItemProps> = ({ reel, isActive, isMuted, toggleMute
                     />
                     <ShareOption icon={<Share2 />} label="المزيد" onClick={handleNativeShare} />
                 </div>
+
+                {/* Internal User List (UPDATED: Vertical Grid) - MOVED TO BOTTOM */}
+                <div className="grid grid-cols-4 gap-4 overflow-y-auto no-scrollbar max-h-[250px] py-2 px-1">
+                    {filteredShareUsers.length > 0 ? filteredShareUsers.map(user => {
+                        const isSent = sentUsers.includes(user.id);
+                        return (
+                            <div key={user.id} className="flex flex-col items-center gap-2 cursor-pointer group" onClick={(e) => { e.stopPropagation(); toggleSendToUser(user.id); }}>
+                                <div className="w-14 h-14 rounded-full bg-gray-700 overflow-hidden border border-gray-600 relative group-hover:scale-105 transition-transform">
+                                    <img src={user.avatar} className={`w-full h-full object-cover transition-opacity ${isSent ? 'opacity-50' : ''}`} />
+                                    {isSent && (
+                                        <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                                            <Check className="w-6 h-6 text-white" />
+                                        </div>
+                                    )}
+                                </div>
+                                <span className="text-[10px] text-gray-300 truncate w-full text-center">{user.name.split(' ')[0]}</span>
+                                <button 
+                                    className={`text-[10px] px-3 py-1 rounded-full transition-all duration-300 font-bold w-full ${
+                                        isSent ? 'bg-gray-700 text-gray-400' : 'bg-[#0095f6] text-white hover:bg-[#0085dd]'
+                                    }`}
+                                >
+                                    {isSent ? 'تم' : 'إرسال'}
+                                </button>
+                            </div>
+                        );
+                    }) : (
+                        <div className="col-span-4 text-center text-xs text-gray-500 py-2">لا يوجد مستخدمين</div>
+                    )}
+                </div>
+
             </div>
         </div>
       )}
