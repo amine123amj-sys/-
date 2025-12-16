@@ -9,7 +9,7 @@ import AuthScreen from './components/AuthScreen';
 import StoryViewer from './components/StoryViewer';
 import { Tab, ChatMode, Reel, Story, User, StoryItem } from './types';
 import { STRINGS } from './constants';
-import { Tags, Video, MessageSquareText, X, ArrowRight, Clapperboard, PlusSquare, Search, MessageCircle, Edit } from 'lucide-react';
+import { Tags, Video, MessageSquareText, X, ArrowRight, Clapperboard, PlusSquare, Search, MessageCircle, Edit, ChevronDown } from 'lucide-react';
 
 const DUMMY_REELS: Reel[] = [
   {
@@ -34,6 +34,11 @@ const DUMMY_REELS: Reel[] = [
     comments: 20,
     shares: 5,
     isBoosted: true,
+    boostConfig: {
+      budget: '10',
+      duration: '1',
+      target: 'auto'
+    },
     category: 'travel',
     tags: ['سفر', 'جبال']
   }
@@ -84,6 +89,8 @@ const INITIAL_STORIES: Story[] = [
 const MOCK_CHAT_USERS = [
     { id: 1, name: 'أحمد محمد', username: 'ahmed_m', msg: 'هلا، كيف الحال؟', time: 'الآن', active: true, avatar: 'https://picsum.photos/100/100?random=200' },
     { id: 2, name: 'سارة', username: 'sara_art', msg: 'شكراً على المشاركة 🙏', time: '2د', active: false, avatar: 'https://picsum.photos/100/100?random=201' },
+    { id: 3, name: 'محمد علي', username: 'mo_ali', msg: 'أرسل لي الملف', time: '1س', active: true, avatar: 'https://picsum.photos/100/100?random=202' },
+    { id: 4, name: 'نور', username: 'nour_design', msg: 'فكرة ممتازة!', time: 'أمس', active: false, avatar: 'https://picsum.photos/100/100?random=203' },
 ];
 
 const App: React.FC = () => {
@@ -150,6 +157,20 @@ const App: React.FC = () => {
       setActiveTab('home');
   };
 
+  const handleUpdateProfile = (updatedUser: User) => {
+      setCurrentUser(updatedUser);
+      localStorage.setItem('nel_user_session', JSON.stringify(updatedUser));
+      
+      // Update Story Avatar if it exists
+      setStories(prev => {
+          const newStories = [...prev];
+          if (newStories.length > 0 && newStories[0].isUser) {
+              newStories[0] = { ...newStories[0], avatar: updatedUser.avatar };
+          }
+          return newStories;
+      });
+  };
+
   const addInterest = () => {
     if (currentInterestInput.trim() && !interests.includes(currentInterestInput.trim())) {
         setInterests([...interests, currentInterestInput.trim()]);
@@ -167,9 +188,18 @@ const App: React.FC = () => {
       setInterests(interests.filter(i => i !== interest));
   };
 
+  // Start Random Chat
   const startChat = (mode: ChatMode) => {
       setChatMode(mode);
+      setSelectedFriend(null); // Ensure no specific friend is selected
       setIsInChat(true);
+  };
+
+  // Start Direct Chat (WhatsApp Style)
+  const openDirectChat = (user: any) => {
+      setSelectedFriend(user);
+      setChatMode('text'); // Default to text for direct chat
+      setIsInChat(true); // Re-use the ChatWindow container
   };
 
   const handlePublishReel = (newReel: Reel) => {
@@ -210,12 +240,21 @@ const App: React.FC = () => {
       return <AuthScreen onLogin={handleLogin} />;
   }
 
+  // Handle Global Chat Window (Overlay)
+  if (isInChat) {
+      return (
+        <ChatWindow 
+            onBack={() => { setIsInChat(false); setSelectedFriend(null); }} 
+            interests={interests} 
+            mode={chatMode} 
+            targetUser={selectedFriend}
+        />
+      );
+  }
+
   const renderContent = () => {
     switch (activeTab) {
       case 'home':
-        if (isInChat) {
-             return <ChatWindow onBack={() => setIsInChat(false)} interests={interests} mode={chatMode} />;
-        }
         return (
           <div className="flex flex-col h-full bg-black text-white relative overflow-y-auto no-scrollbar pb-24">
             
@@ -228,7 +267,9 @@ const App: React.FC = () => {
                          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
                          <span className="text-[10px] font-bold text-gray-400">24K</span>
                      </div>
-                     <MessageCircle className="w-6 h-6 hover:text-[#0095f6] transition-colors cursor-pointer" />
+                     <button onClick={() => setActiveTab('explore')} className="hover:scale-110 transition-transform">
+                        <MessageCircle className="w-6 h-6 hover:text-[#0095f6] transition-colors cursor-pointer" />
+                     </button>
                  </div>
             </div>
 
@@ -316,19 +357,13 @@ const App: React.FC = () => {
       case 'create':
         return <CreateVideo onClose={() => setActiveTab('home')} onPublishReel={handlePublishReel} onPublishStory={handlePublishStory} />;
       case 'explore': 
-        // ... (Explore Logic same as before)
         const filteredUsers = MOCK_CHAT_USERS.filter(u => 
             u.name.toLowerCase().includes(messageSearchQuery.toLowerCase()) || 
             u.username.toLowerCase().includes(messageSearchQuery.toLowerCase())
         );
         return (
           <div className="flex flex-col h-full bg-black pb-20">
-             {/* ... simplified for brevity, assume same content as previous version */}
-              <div className="p-4 flex justify-between items-center sticky top-0 bg-black z-20">
-                  <h2 className="text-xl font-bold">{currentUser.username}</h2>
-                  <Edit className="w-6 h-6" />
-              </div>
-              <div className="px-4 pb-4 sticky top-14 bg-black z-20">
+              <div className="px-4 pb-4 pt-4 sticky top-0 bg-black z-20 border-b border-gray-900/50">
                   <div className="bg-[#262626] rounded-xl flex items-center px-3 py-2 gap-2">
                       <Search className="w-4 h-4 text-gray-400" />
                       <input 
@@ -340,17 +375,34 @@ const App: React.FC = () => {
                   </div>
               </div>
               <div className="flex-1 overflow-y-auto no-scrollbar pb-20">
+                 <h3 className="px-4 text-sm font-bold text-white mb-2 pt-2">الرسائل</h3>
                  {filteredUsers.map(user => (
-                     <div key={user.id} className="flex items-center gap-3 p-4 hover:bg-gray-900 cursor-pointer">
-                        <img src={user.avatar} className="w-14 h-14 rounded-full" />
-                        <div className="flex-1"><h4 className="font-bold">{user.name}</h4><p className="text-xs text-gray-400">{user.msg}</p></div>
+                     <div 
+                        key={user.id} 
+                        onClick={() => openDirectChat(user)}
+                        className="flex items-center gap-3 p-4 hover:bg-gray-900 cursor-pointer active:bg-gray-800 transition-colors"
+                     >
+                        <div className="relative">
+                            <img src={user.avatar} className="w-14 h-14 rounded-full object-cover border border-gray-800" />
+                            {user.active && <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-black"></div>}
+                        </div>
+                        <div className="flex-1">
+                            <h4 className="font-medium text-white text-sm">{user.name}</h4>
+                            <div className="flex items-center gap-2">
+                                <p className={`text-sm truncate max-w-[200px] ${user.active ? 'text-white font-semibold' : 'text-gray-400'}`}>{user.msg}</p>
+                                <span className="text-gray-500 text-xs">• {user.time}</span>
+                            </div>
+                        </div>
+                        <div className="bg-[#262626] p-2 rounded-full">
+                            <Video className="w-5 h-5 text-gray-300" />
+                        </div>
                      </div>
                  ))}
               </div>
           </div>
         );
       case 'profile':
-        return <ProfileView currentUser={currentUser} onLogout={handleLogout} />;
+        return <ProfileView currentUser={currentUser} onLogout={handleLogout} onUpdateProfile={handleUpdateProfile} />;
       default:
         return null;
     }

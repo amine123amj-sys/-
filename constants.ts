@@ -25,3 +25,141 @@ export const STRINGS = {
   commonInterests: 'أنتما تشتركان في: ',
   stranger: 'غريب',
 };
+
+export interface Language {
+  code: string;
+  name: string;
+  nativeName: string;
+  dir: 'rtl' | 'ltr';
+}
+
+export const SUPPORTED_LANGUAGES: Language[] = [
+  // Primary
+  { code: 'ar', name: 'Arabic', nativeName: 'العربية', dir: 'rtl' },
+  { code: 'en', name: 'English', nativeName: 'English', dir: 'ltr' },
+  { code: 'fr', name: 'French', nativeName: 'Français', dir: 'ltr' },
+  { code: 'es', name: 'Spanish', nativeName: 'Español', dir: 'ltr' },
+  { code: 'pt', name: 'Portuguese', nativeName: 'Português', dir: 'ltr' },
+  { code: 'de', name: 'German', nativeName: 'Deutsch', dir: 'ltr' },
+  { code: 'it', name: 'Italian', nativeName: 'Italiano', dir: 'ltr' },
+  { code: 'ru', name: 'Russian', nativeName: 'Русский', dir: 'ltr' },
+  { code: 'tr', name: 'Turkish', nativeName: 'Türkçe', dir: 'ltr' },
+  { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', dir: 'ltr' },
+  
+  // Asian
+  { code: 'zh', name: 'Chinese (Simplified)', nativeName: '中文 (简体)', dir: 'ltr' },
+  { code: 'zh-TW', name: 'Chinese (Traditional)', nativeName: '中文 (繁體)', dir: 'ltr' },
+  { code: 'ja', name: 'Japanese', nativeName: '日本語', dir: 'ltr' },
+  { code: 'ko', name: 'Korean', nativeName: '한국어', dir: 'ltr' },
+  { code: 'th', name: 'Thai', nativeName: 'ภาษาไทย', dir: 'ltr' },
+  { code: 'vi', name: 'Vietnamese', nativeName: 'Tiếng Việt', dir: 'ltr' },
+  { code: 'id', name: 'Indonesian', nativeName: 'Bahasa Indonesia', dir: 'ltr' },
+  { code: 'ms', name: 'Malay', nativeName: 'Bahasa Melayu', dir: 'ltr' },
+  { code: 'fil', name: 'Filipino', nativeName: 'Filipino', dir: 'ltr' },
+  { code: 'ur', name: 'Urdu', nativeName: 'اردو', dir: 'rtl' },
+
+  // African
+  { code: 'sw', name: 'Swahili', nativeName: 'Kiswahili', dir: 'ltr' },
+  { code: 'am', name: 'Amharic', nativeName: 'Amharic', dir: 'ltr' },
+  { code: 'ha', name: 'Hausa', nativeName: 'Hausa', dir: 'ltr' },
+  { code: 'yo', name: 'Yoruba', nativeName: 'Yoruba', dir: 'ltr' },
+  { code: 'ig', name: 'Igbo', nativeName: 'Igbo', dir: 'ltr' },
+  
+  // Eastern European
+  { code: 'pl', name: 'Polish', nativeName: 'Polski', dir: 'ltr' },
+  { code: 'cs', name: 'Czech', nativeName: 'Čeština', dir: 'ltr' },
+  { code: 'sk', name: 'Slovak', nativeName: 'Slovenčina', dir: 'ltr' },
+  { code: 'hu', name: 'Hungarian', nativeName: 'Magyar', dir: 'ltr' },
+  { code: 'ro', name: 'Romanian', nativeName: 'Română', dir: 'ltr' },
+  { code: 'bg', name: 'Bulgarian', nativeName: 'Български', dir: 'ltr' },
+  { code: 'sr', name: 'Serbian', nativeName: 'Српски', dir: 'ltr' },
+  { code: 'hr', name: 'Croatian', nativeName: 'Hrvatski', dir: 'ltr' },
+  { code: 'uk', name: 'Ukrainian', nativeName: 'Українська', dir: 'ltr' },
+
+  // Others
+  { code: 'nl', name: 'Dutch', nativeName: 'Nederlands', dir: 'ltr' },
+  { code: 'sv', name: 'Swedish', nativeName: 'Svenska', dir: 'ltr' },
+  { code: 'no', name: 'Norwegian', nativeName: 'Norsk', dir: 'ltr' },
+  { code: 'da', name: 'Danish', nativeName: 'Dansk', dir: 'ltr' },
+  { code: 'fi', name: 'Finnish', nativeName: 'Suomi', dir: 'ltr' },
+  { code: 'el', name: 'Greek', nativeName: 'Ελληνικά', dir: 'ltr' },
+  { code: 'he', name: 'Hebrew', nativeName: 'עברית', dir: 'rtl' },
+  { code: 'fa', name: 'Persian', nativeName: 'فارسی', dir: 'rtl' },
+  { code: 'bn', name: 'Bengali', nativeName: 'বাংলা', dir: 'ltr' },
+];
+
+// Dictionary for UI Translations
+export const TRANSLATIONS: Record<string, Record<string, string>> = {
+  ar: {
+    settings_privacy: 'الإعدادات والخصوصية',
+    search_settings: 'بحث في الإعدادات',
+    account: 'الحساب',
+    personal_info: 'معلومات الحساب',
+    security: 'الأمان',
+    devices: 'الأجهزة المتصلة',
+    wallet: 'الرصيد والهدايا',
+    account_type: 'نوع الحساب',
+    download_info: 'تنزيل معلوماتك',
+    delete_account: 'تعطيل أو حذف الحساب',
+    privacy: 'الخصوصية',
+    private_account: 'حساب خاص',
+    activity_status: 'حالة النشاط',
+    blocked_accounts: 'الحسابات المحظورة',
+    close_friends: 'الأصدقاء المقربون',
+    comments: 'التعليقات',
+    smart_features: 'ميزات ذكية',
+    ghost_mode: 'وضع التخفي',
+    secure_mode: 'حماية المحتوى',
+    app_media: 'التطبيق والوسائط',
+    notifications: 'الإشعارات',
+    dark_mode: 'الوضع الليلي',
+    language: 'اللغة',
+    support: 'الدعم',
+    help_center: 'مركز المساعدة',
+    report_problem: 'الإبلاغ عن مشكلة',
+    terms: 'الشروط والسياسات',
+    add_account: 'إضافة حساب',
+    logout: 'تسجيل الخروج',
+    edit_profile: 'تعديل الملف',
+    followers: 'الجمهور',
+    following: 'التفاعل',
+    content: 'المحتوى',
+    search_language: 'بحث'
+  },
+  en: {
+    settings_privacy: 'Settings & Privacy',
+    search_settings: 'Search Settings',
+    account: 'Account',
+    personal_info: 'Personal Information',
+    security: 'Security',
+    devices: 'Connected Devices',
+    wallet: 'Wallet & Gifts',
+    account_type: 'Account Type',
+    download_info: 'Download Your Information',
+    delete_account: 'Deactivate or Delete Account',
+    privacy: 'Privacy',
+    private_account: 'Private Account',
+    activity_status: 'Activity Status',
+    blocked_accounts: 'Blocked Accounts',
+    close_friends: 'Close Friends',
+    comments: 'Comments',
+    smart_features: 'Smart Features',
+    ghost_mode: 'Ghost Mode',
+    secure_mode: 'Content Protection',
+    app_media: 'App and Media',
+    notifications: 'Notifications',
+    dark_mode: 'Dark Mode',
+    language: 'Language',
+    support: 'Support',
+    help_center: 'Help Center',
+    report_problem: 'Report a Problem',
+    terms: 'Terms & Policies',
+    add_account: 'Add Account',
+    logout: 'Log Out',
+    edit_profile: 'Edit Profile',
+    followers: 'Followers',
+    following: 'Following',
+    content: 'Content',
+    search_language: 'Search'
+  }
+};

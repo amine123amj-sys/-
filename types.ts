@@ -1,9 +1,16 @@
 
 export interface Message {
   id: string;
-  text: string;
+  text?: string;
+  audioUrl?: string;
+  mediaUrl?: string; // For images/videos
+  fileName?: string; // For documents/original quality files
+  fileSize?: string; // e.g., "2.5 MB"
+  duration?: number;
+  type?: 'text' | 'audio' | 'image' | 'video' | 'file';
   sender: 'me' | 'other' | 'system';
   timestamp: number;
+  status?: 'sent' | 'delivered' | 'read';
 }
 
 export enum ChatState {
@@ -71,6 +78,8 @@ export interface User {
   email: string;
   avatar: string;
   bio?: string;
+  phone?: string;
+  dob?: string;
   followers: number;
   following: number;
   postsCount: number;
