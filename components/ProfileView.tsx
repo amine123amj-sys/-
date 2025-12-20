@@ -4,7 +4,7 @@ import {
   ChevronDown, Link as LinkIcon, X, Check,
   Lock, Bell, ShieldAlert, LogOut, Users, Heart, EyeOff, Eye, Zap, Smile, Music, Briefcase, Camera,
   UserCog, Smartphone, Key, Globe, Moon, HelpCircle, MessageCircle, Ban, BellRing, ShieldCheck, History,
-  Fingerprint, Ghost, Download, FileJson, AlertTriangle, CreditCard, ArrowRight, ArrowLeft, Mail, Calendar, MapPin, Laptop, Trash2, Search, Edit2, Shield, CheckCircle, Smartphone as PhoneIcon, AtSign, Plus, RefreshCw
+  Fingerprint, Ghost, Download, FileJson, AlertTriangle, CreditCard, ArrowRight, ArrowLeft, Mail, Calendar, MapPin, Laptop, Trash2, Search, Edit2, Shield, CheckCircle, Smartphone as PhoneIcon, AtSign, Plus, RefreshCw, ChevronRight, Info, ChevronUp, Share2, Bookmark, PlayCircle
 } from 'lucide-react';
 import { User } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -14,10 +14,10 @@ import { SUPPORTED_LANGUAGES } from '../constants';
 const ANONYMOUS_AVATAR = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png";
 
 // --- DUMMY DATA ---
-const MY_CONTENT = Array.from({ length: 15 }).map((_, i) => ({
+const MY_CONTENT = Array.from({ length: 18 }).map((_, i) => ({
   id: i,
-  url: `https://picsum.photos/300/300?random=${i + 100}`,
-  type: i % 3 === 0 ? 'video' : i % 2 === 0 ? 'image' : 'text',
+  url: `https://picsum.photos/400/${i % 3 === 0 ? '600' : '400'}?random=${i + 100}`,
+  type: i % 4 === 0 ? 'video' : i % 2 === 0 ? 'image' : 'text',
   views: Math.floor(Math.random() * 5000) + 500
 }));
 
@@ -32,23 +32,23 @@ const MOODS = [
 // Helper Components for Settings
 const SettingsGroup = ({ title, children }: { title: string, children?: React.ReactNode }) => (
     <div className="space-y-1">
-        <h3 className="text-xs font-bold text-gray-500 px-2 mb-2 uppercase tracking-wider">{title}</h3>
+        <h3 className="text-xs font-bold text-gray-500 px-4 mb-2 uppercase tracking-wider mt-4">{title}</h3>
         <div className="space-y-1">
             {children}
         </div>
-        <div className="h-px bg-gray-800 my-4 mx-2"></div>
+        <div className="h-px bg-gray-900 my-2 mx-4"></div>
     </div>
 );
 
 const SettingsToggle = ({ icon, label, subtext, isOn, onToggle }: any) => (
-    <div className="flex items-center justify-between p-3 hover:bg-[#1c1c1c] rounded-xl transition-colors cursor-pointer" onClick={onToggle}>
+    <div className="flex items-center justify-between p-3 px-4 hover:bg-[#1c1c1c] transition-colors cursor-pointer" onClick={onToggle}>
          <div className="flex items-center gap-3">
-             <div className="p-2 bg-gray-800 rounded-lg text-gray-200">
-                 {React.cloneElement(icon, { className: "w-5 h-5" })}
+             <div className="text-white">
+                 {React.cloneElement(icon, { className: "w-6 h-6" })}
              </div>
              <div className="flex flex-col items-start">
-                 <span className="text-sm font-bold text-white">{label}</span>
-                 {subtext && <span className="text-[10px] text-gray-400">{subtext}</span>}
+                 <span className="text-base font-normal text-white">{label}</span>
+                 {subtext && <span className="text-xs text-gray-400">{subtext}</span>}
              </div>
          </div>
          <div className={`w-11 h-6 rounded-full p-1 transition-colors duration-300 ${isOn ? 'bg-[#0095f6]' : 'bg-gray-600'}`}>
@@ -57,18 +57,18 @@ const SettingsToggle = ({ icon, label, subtext, isOn, onToggle }: any) => (
     </div>
 );
 
-const SettingsRow = ({ icon, label, subtext, isDestructive, onClick, rightElement }: any) => (
-    <button onClick={onClick} className="w-full flex items-center justify-between p-3 hover:bg-[#1c1c1c] rounded-xl transition-colors group text-right">
+const SettingsRow = ({ icon, label, subtext, isDestructive, onClick, rightElement, isBlue }: any) => (
+    <button onClick={onClick} className="w-full flex items-center justify-between p-3 px-4 hover:bg-[#1c1c1c] transition-colors group text-right active:bg-gray-800">
         <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-lg transition-colors text-gray-200 ${isDestructive ? 'bg-red-500/10 text-red-500' : 'bg-gray-800 group-hover:bg-gray-700'}`}>
-                {React.cloneElement(icon, { className: `w-5 h-5 ${isDestructive ? 'text-red-500' : ''}` })}
+            <div className={`transition-colors ${isDestructive ? 'text-red-500' : isBlue ? 'text-[#0095f6]' : 'text-white'}`}>
+                {React.cloneElement(icon, { className: `w-6 h-6` })}
             </div>
             <div className="flex flex-col items-start text-start">
-                <span className={`text-sm font-bold ${isDestructive ? 'text-red-500' : 'text-white'}`}>{label}</span>
-                {subtext && <span className="text-[10px] text-gray-400">{subtext}</span>}
+                <span className={`text-base font-normal ${isDestructive ? 'text-red-500' : isBlue ? 'text-[#0095f6]' : 'text-white'}`}>{label}</span>
+                {subtext && <span className="text-xs text-gray-400">{subtext}</span>}
             </div>
         </div>
-        {rightElement ? rightElement : <ChevronDown className="w-4 h-4 rotate-90 text-gray-600 group-hover:text-gray-400 transition-colors ltr:rotate-[-90deg]" />}
+        {rightElement ? rightElement : <ChevronDown className="w-5 h-5 rotate-90 text-gray-500 group-hover:text-gray-300 transition-colors ltr:rotate-[-90deg]" />}
     </button>
 );
 
@@ -82,6 +82,7 @@ type SettingsPage =
   | 'MAIN' 
   | 'PERSONAL_INFO' 
   | 'ACCOUNT_TYPE'
+  | 'ADD_PROFESSIONAL'
   | 'SECURITY_MAIN' 
   | 'SECURITY_PASSWORD'
   | 'SECURITY_FORGOT_PASSWORD'
@@ -93,7 +94,10 @@ type SettingsPage =
   | 'CLOSE_FRIENDS' 
   | 'WALLET' 
   | 'LANGUAGE' 
-  | 'HELP';
+  | 'HELP'
+  | 'REPORT'
+  | 'TERMS'
+  | 'DELETE_ACCOUNT';
 
 const ProfileView: React.FC<ProfileViewProps> = ({ currentUser, onLogout, onUpdateProfile }) => {
   const { t, language, setLanguage, dir } = useLanguage();
@@ -111,18 +115,21 @@ const ProfileView: React.FC<ProfileViewProps> = ({ currentUser, onLogout, onUpda
     postsCount: 0
   });
 
-  // Ensure local state is in sync if currentUser changes (e.g. login)
   useEffect(() => {
       if (currentUser) {
           setUser(currentUser);
       }
   }, [currentUser]);
 
-  const [activeTab, setActiveTab] = useState<'all' | 'video' | 'image' | 'text'>('all');
+  // Tabs updated to: Videos, Highlights, Saved
+  const [activeTab, setActiveTab] = useState<'my_videos' | 'highlights' | 'saved_videos'>('my_videos');
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [settingsPage, setSettingsPage] = useState<SettingsPage>('MAIN');
-  const [langSearch, setLangSearch] = useState('');
+  const [isBioExpanded, setIsBioExpanded] = useState(false);
+
+  // Logout Modal State
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // Editing Info State
   const [editingField, setEditingField] = useState<'email' | 'phone' | 'dob' | null>(null);
@@ -144,15 +151,28 @@ const ProfileView: React.FC<ProfileViewProps> = ({ currentUser, onLogout, onUpda
   });
   
   const [accountType, setAccountType] = useState<'personal' | 'professional'>('personal');
-
-  // Security Email Tab State
   const [emailTab, setEmailTab] = useState<'security' | 'other'>('security');
 
-  // Forgot Password Flow State
+  // Forgot Password / Delete Account Flow State
   const [forgotStep, setForgotStep] = useState<'METHOD' | 'INPUT' | 'OTP' | 'NEW_PASS' | 'SUCCESS'>('METHOD');
   const [recoveryMethod, setRecoveryMethod] = useState<'email' | 'phone'>('email');
   const [otpCode, setOtpCode] = useState(['', '', '', '', '', '']);
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // Delete Account Specific States
+  const [deleteReason, setDeleteReason] = useState('');
+  const [deleteType, setDeleteType] = useState<'DISABLE' | 'DELETE'>('DISABLE'); 
+  const [deleteVerifyStep, setDeleteVerifyStep] = useState<'SELECT_METHOD' | 'VERIFY'>('SELECT_METHOD');
+  const [deleteVerifyMethod, setDeleteVerifyMethod] = useState<'PASSWORD' | 'OTP'>('PASSWORD');
+  const [deletePassword, setDeletePassword] = useState('');
+
+  // Report Problem State
+  const [reportText, setReportText] = useState('');
+  const [reportSent, setReportSent] = useState(false);
+
+  // Add Professional Account State
+  const [profCategory, setProfCategory] = useState('');
+  const [profLoading, setProfLoading] = useState(false);
 
   // Mock Data
   const [blockedUsers, setBlockedUsers] = useState([
@@ -195,67 +215,73 @@ const ProfileView: React.FC<ProfileViewProps> = ({ currentUser, onLogout, onUpda
     }
   };
 
-  // --- INFO EDITING HANDLERS ---
+  const handleRemovePhoto = () => {
+      setEditForm(prev => ({ ...prev, avatar: ANONYMOUS_AVATAR }));
+  };
+
   const openEditModal = (field: 'email' | 'phone' | 'dob') => {
       setEditingField(field);
-      // Set initial value based on field
       if (field === 'email') setTempValue(user.email || '');
       else if (field === 'phone') setTempValue(user.phone || '');
       else if (field === 'dob') setTempValue(user.dob || '');
   };
 
-  const saveField = () => {
-      if (!editingField) return;
-      
-      const updatedUser = { ...user, [editingField]: tempValue };
-      setUser(updatedUser); // Update local state for display
-      setEditForm(updatedUser); // Update edit form state
-      onUpdateProfile(updatedUser); // Persist to global/storage
-      setEditingField(null);
-  };
-
-  const getRingColor = () => {
-      if (currentMood.id === 'live') return 'from-purple-500 via-pink-500 to-red-500';
-      if (currentMood.id === 'work') return 'from-gray-500 to-gray-700';
-      return 'from-blue-400 to-blue-600';
-  };
-
   const renderSmartGrid = () => {
-      const items = MY_CONTENT.filter(item => {
-          if (activeTab === 'all') return true;
-          return item.type === activeTab;
-      });
+      // Filter logic based on the new tabs
+      let items = [];
+      
+      if (activeTab === 'my_videos') {
+          // Show "Video" types as user's main videos
+          items = MY_CONTENT.filter(item => item.type === 'video');
+      } else if (activeTab === 'highlights') {
+          // Mock highlights (using images for now)
+          items = MY_CONTENT.filter(item => item.type === 'image');
+      } else if (activeTab === 'saved_videos') {
+          // Mock saved videos (mix of text and some video)
+          items = MY_CONTENT.filter((_, i) => i % 2 === 0);
+      }
+
+      if (items.length === 0) {
+          return (
+              <div className="flex flex-col items-center justify-center py-20 text-gray-500">
+                  <div className="w-16 h-16 rounded-full border-2 border-gray-800 flex items-center justify-center mb-4">
+                      {activeTab === 'my_videos' && <Video className="w-8 h-8" />}
+                      {activeTab === 'highlights' && <Star className="w-8 h-8" />}
+                      {activeTab === 'saved_videos' && <Bookmark className="w-8 h-8" />}
+                  </div>
+                  <p className="font-bold">لا يوجد محتوى لعرضه</p>
+              </div>
+          );
+      }
 
       return (
-          <div className="grid grid-cols-3 gap-1 px-1 pb-24">
+          <div className="grid grid-cols-3 gap-1 px-1 pb-24 auto-rows-[120px]">
               {items.map((item, index) => {
-                  const isFeatured = index === 0 && activeTab === 'all';
+                  // Smart Layout Logic
+                  const isLarge = index % 10 === 0;
+                  const isWide = index % 5 === 0 && !isLarge;
+                  
                   return (
-                      <div 
+                    <div 
                         key={item.id} 
-                        className={`relative bg-gray-900 overflow-hidden rounded-md cursor-pointer hover:opacity-90 transition-opacity group ${
-                            isFeatured ? 'col-span-2 row-span-2 aspect-square' : 'col-span-1 aspect-square'
-                        }`}
-                      >
-                          {item.type === 'text' ? (
-                              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-black p-4 text-center">
-                                  <p className="text-white text-xs font-bold leading-relaxed line-clamp-4">
-                                      "أفكار اليوم: الهدوء هو مفتاح الإبداع ✨"
-                                  </p>
-                              </div>
-                          ) : (
-                              <img src={item.url} className="w-full h-full object-cover" />
-                          )}
-                          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              {item.type === 'video' && <Video className="w-4 h-4 text-white drop-shadow-md" />}
-                              {item.type === 'text' && <FileText className="w-4 h-4 text-white drop-shadow-md" />}
-                          </div>
-                          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <span className="text-[10px] font-bold text-white flex items-center gap-1">
-                                  <Eye className="w-3 h-3" /> {(item.views / 1000).toFixed(1)}k
-                              </span>
-                          </div>
-                      </div>
+                        className={`relative bg-gray-900 overflow-hidden rounded-xl cursor-pointer hover:opacity-90 transition-opacity group 
+                        ${isLarge ? 'col-span-2 row-span-2' : isWide ? 'col-span-2' : 'col-span-1'}
+                        `}
+                    >
+                        {item.type === 'text' ? (
+                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-black p-4 text-center">
+                                <p className="text-white text-xs font-bold leading-relaxed line-clamp-4">"أفكار اليوم: الهدوء هو مفتاح الإبداع ✨"</p>
+                            </div>
+                        ) : (
+                            <>
+                                <img src={item.url} className="w-full h-full object-cover" />
+                                {item.type === 'video' && <div className="absolute top-2 right-2 bg-black/50 p-1 rounded-full"><Video className="w-3 h-3 text-white" /></div>}
+                            </>
+                        )}
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                            <Heart className="w-4 h-4 text-white fill-white" /> <span className="text-white text-xs font-bold">{Math.floor(item.views / 100)}</span>
+                        </div>
+                    </div>
                   );
               })}
           </div>
@@ -268,527 +294,23 @@ const ProfileView: React.FC<ProfileViewProps> = ({ currentUser, onLogout, onUpda
       const newOtp = [...otpCode];
       newOtp[index] = value;
       setOtpCode(newOtp);
-      if (value !== '' && index < 5) {
-          otpRefs.current[index + 1]?.focus();
-      }
+      if (value !== '' && index < 5) otpRefs.current[index + 1]?.focus();
   };
 
   const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Backspace' && otpCode[index] === '' && index > 0) {
-          otpRefs.current[index - 1]?.focus();
-      }
+      if (e.key === 'Backspace' && otpCode[index] === '' && index > 0) otpRefs.current[index - 1]?.focus();
   };
 
-  // --- SECURITY SUB-SCREENS ---
+  // --- SUB-SCREENS ---
 
-  const renderForgotPassword = () => {
-      switch (forgotStep) {
-          case 'METHOD':
-              return (
-                  <div className="p-6 flex flex-col h-full animate-in slide-in-from-right">
-                      <div className="text-center mb-8">
-                          <div className="w-20 h-20 bg-[#1c1c1c] rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-800">
-                              <Lock className="w-10 h-10 text-[#0095f6]" />
-                          </div>
-                          <h3 className="text-xl font-bold text-white">استرداد الحساب</h3>
-                          <p className="text-sm text-gray-400 mt-2">كيف تريد استلام رمز التحقق لإعادة تعيين كلمة المرور؟</p>
-                      </div>
-                      
-                      <div className="space-y-3">
-                          <button 
-                              onClick={() => { setRecoveryMethod('email'); setForgotStep('INPUT'); }}
-                              className="w-full flex items-center justify-between p-4 bg-[#1c1c1c] rounded-xl border border-gray-800 hover:border-gray-600 transition-colors"
-                          >
-                              <div className="flex items-center gap-4">
-                                  <div className="bg-gray-800 p-2.5 rounded-full"><Mail className="w-5 h-5 text-white" /></div>
-                                  <div className="text-right">
-                                      <p className="font-bold text-sm text-white">البريد الإلكتروني</p>
-                                      <p className="text-xs text-gray-500">إرسال الرمز إلى بريدك</p>
-                                  </div>
-                              </div>
-                              <ArrowLeft className="w-5 h-5 text-gray-500 rtl:rotate-180" />
-                          </button>
-
-                          <button 
-                              onClick={() => { setRecoveryMethod('phone'); setForgotStep('INPUT'); }}
-                              className="w-full flex items-center justify-between p-4 bg-[#1c1c1c] rounded-xl border border-gray-800 hover:border-gray-600 transition-colors"
-                          >
-                              <div className="flex items-center gap-4">
-                                  <div className="bg-gray-800 p-2.5 rounded-full"><Smartphone className="w-5 h-5 text-white" /></div>
-                                  <div className="text-right">
-                                      <p className="font-bold text-sm text-white">رقم الهاتف</p>
-                                      <p className="text-xs text-gray-500">إرسال الرمز عبر SMS</p>
-                                  </div>
-                              </div>
-                              <ArrowLeft className="w-5 h-5 text-gray-500 rtl:rotate-180" />
-                          </button>
-                      </div>
-                  </div>
-              );
-          
-          case 'INPUT':
-              return (
-                  <div className="p-6 flex flex-col h-full animate-in slide-in-from-right">
-                      <h3 className="text-xl font-bold text-white mb-2 text-center">أدخل {recoveryMethod === 'email' ? 'بريدك الإلكتروني' : 'رقم هاتفك'}</h3>
-                      <p className="text-sm text-gray-400 mb-8 text-center">سنرسل رمز تحقق مكون من 6 أرقام إلى هذا {recoveryMethod === 'email' ? 'البريد' : 'الرقم'}.</p>
-                      
-                      <div className="bg-[#1c1c1c] px-4 py-3 rounded-xl border border-gray-800 mb-6 flex items-center gap-3">
-                          {recoveryMethod === 'email' ? <Mail className="text-gray-500 w-5 h-5" /> : <PhoneIcon className="text-gray-500 w-5 h-5" />}
-                          <input 
-                              type={recoveryMethod === 'email' ? 'email' : 'tel'} 
-                              defaultValue={recoveryMethod === 'email' ? user.email : user.phone}
-                              placeholder={recoveryMethod === 'email' ? 'name@example.com' : '+966...'}
-                              className="bg-transparent border-none outline-none text-white w-full text-sm placeholder-gray-600 text-left dir-ltr"
-                          />
-                      </div>
-
-                      <button onClick={() => setForgotStep('OTP')} className="w-full bg-[#0095f6] hover:bg-[#0085dd] text-white py-3.5 rounded-xl font-bold shadow-lg shadow-blue-900/20 mb-4">
-                          إرسال الرمز
-                      </button>
-                      <button onClick={() => setForgotStep('METHOD')} className="text-sm text-gray-500 font-bold hover:text-white transition-colors">
-                          تغيير الطريقة
-                      </button>
-                  </div>
-              );
-
-          case 'OTP':
-              return (
-                  <div className="p-6 flex flex-col h-full animate-in slide-in-from-right">
-                      <h3 className="text-xl font-bold text-white mb-2 text-center">أدخل رمز التحقق</h3>
-                      <p className="text-sm text-gray-400 mb-8 text-center">تم إرسال الرمز إلى {recoveryMethod === 'email' ? user.email : user.phone}</p>
-                      
-                      <div className="flex justify-between gap-2 mb-8 dir-ltr">
-                          {otpCode.map((digit, i) => (
-                              <input
-                                  key={i}
-                                  ref={el => otpRefs.current[i] = el}
-                                  type="text"
-                                  maxLength={1}
-                                  value={digit}
-                                  onChange={(e) => handleOtpChange(i, e.target.value)}
-                                  onKeyDown={(e) => handleOtpKeyDown(i, e)}
-                                  className="w-12 h-14 bg-[#1c1c1c] border border-gray-700 rounded-lg text-center text-2xl font-bold text-white focus:border-[#0095f6] focus:bg-[#262626] outline-none transition-all"
-                              />
-                          ))}
-                      </div>
-
-                      <button onClick={() => setForgotStep('NEW_PASS')} className="w-full bg-[#0095f6] hover:bg-[#0085dd] text-white py-3.5 rounded-xl font-bold shadow-lg shadow-blue-900/20 mb-6">
-                          تحقق
-                      </button>
-                      
-                      <div className="flex justify-between text-sm">
-                          <span className="text-gray-500">لم يصلك الرمز؟</span>
-                          <button className="text-[#0095f6] font-bold">إعادة الإرسال (30s)</button>
-                      </div>
-                  </div>
-              );
-
-          case 'NEW_PASS':
-              return (
-                  <div className="p-6 flex flex-col h-full animate-in slide-in-from-right">
-                      <div className="text-center mb-6">
-                          <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-500/20">
-                              <CheckCircle className="w-8 h-8 text-green-500" />
-                          </div>
-                          <h3 className="text-xl font-bold text-white">تعيين كلمة مرور جديدة</h3>
-                          <p className="text-sm text-gray-400 mt-2">يرجى إنشاء كلمة مرور قوية لم تستخدمها من قبل.</p>
-                      </div>
-
-                      <div className="space-y-4 mb-6">
-                          <div className="bg-[#1c1c1c] px-4 py-3 rounded-xl border border-gray-800">
-                              <input type="password" placeholder="كلمة المرور الجديدة" className="bg-transparent border-none outline-none text-white w-full text-sm placeholder-gray-500" />
-                          </div>
-                          <div className="bg-[#1c1c1c] px-4 py-3 rounded-xl border border-gray-800">
-                              <input type="password" placeholder="تأكيد كلمة المرور الجديدة" className="bg-transparent border-none outline-none text-white w-full text-sm placeholder-gray-500" />
-                          </div>
-                      </div>
-
-                      <div className="space-y-2 mb-8">
-                          <p className="text-xs text-gray-500 flex items-center gap-2"><Check className="w-3 h-3 text-green-500" /> 8 أحرف على الأقل</p>
-                          <p className="text-xs text-gray-500 flex items-center gap-2"><Check className="w-3 h-3 text-green-500" /> حروف وأرقام ورموز</p>
-                      </div>
-
-                      <button onClick={() => setForgotStep('SUCCESS')} className="w-full bg-[#0095f6] hover:bg-[#0085dd] text-white py-3.5 rounded-xl font-bold shadow-lg shadow-blue-900/20">
-                          إعادة تعيين كلمة المرور
-                      </button>
-                  </div>
-              );
-
-          case 'SUCCESS':
-              return (
-                  <div className="p-6 flex flex-col h-full items-center justify-center animate-in zoom-in text-center">
-                      <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(34,197,94,0.4)]">
-                          <Check className="w-12 h-12 text-white" strokeWidth={3} />
-                      </div>
-                      <h2 className="text-2xl font-bold text-white mb-2">تم تغيير كلمة المرور!</h2>
-                      <p className="text-gray-400 text-sm mb-8 max-w-[250px]">تم تأمين حسابك بنجاح. يمكنك الآن استخدام كلمة المرور الجديدة لتسجيل الدخول.</p>
-                      
-                      <button 
-                          onClick={() => { setSettingsPage('SECURITY_MAIN'); setForgotStep('METHOD'); }} 
-                          className="w-full bg-[#1c1c1c] border border-gray-700 hover:bg-gray-800 text-white py-3.5 rounded-xl font-bold"
-                      >
-                          العودة للأمان
-                      </button>
-                  </div>
-              );
-      }
-  };
-
-  const renderPasswordChange = () => (
-      <div className="p-4 space-y-6">
-          <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-[#1c1c1c] rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-800">
-                  <Lock className="w-8 h-8 text-[#0095f6]" />
-              </div>
-              <h3 className="text-xl font-bold text-white">تغيير كلمة المرور</h3>
-              <p className="text-xs text-gray-500 mt-2">يجب أن تتكون كلمة المرور من 6 أحرف على الأقل وتتضمن مجموعة من الأرقام والحروف.</p>
-          </div>
-
-          <div className="space-y-4">
-              <div className="bg-[#1c1c1c] p-2 rounded-xl border border-gray-800">
-                  <input type="password" placeholder="كلمة المرور الحالية" className="w-full bg-transparent p-3 text-white text-sm outline-none placeholder-gray-500" />
-              </div>
-              <div className="bg-[#1c1c1c] p-2 rounded-xl border border-gray-800">
-                  <input type="password" placeholder="كلمة المرور الجديدة" className="w-full bg-transparent p-3 text-white text-sm outline-none placeholder-gray-500" />
-              </div>
-              <div className="bg-[#1c1c1c] p-2 rounded-xl border border-gray-800">
-                  <input type="password" placeholder="أعد كتابة كلمة المرور الجديدة" className="w-full bg-transparent p-3 text-white text-sm outline-none placeholder-gray-500" />
-              </div>
-              <div className="flex justify-end">
-                  <button 
-                      onClick={() => { setForgotStep('METHOD'); setSettingsPage('SECURITY_FORGOT_PASSWORD'); }} 
-                      className="text-[#0095f6] text-xs font-bold hover:underline"
-                  >
-                      هل نسيت كلمة المرور؟
-                  </button>
-              </div>
-          </div>
-
-          <button className="w-full bg-[#0095f6] hover:bg-[#0085dd] text-white py-3.5 rounded-xl font-bold mt-4 shadow-lg shadow-blue-900/20">
-              تغيير كلمة المرور
-          </button>
-      </div>
-  );
-
-  const renderAccountType = () => (
-    <div className="p-4 space-y-4 animate-in slide-in-from-right">
-        <div className="text-center py-6">
-            <div className="w-20 h-20 bg-[#1c1c1c] rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-800">
-                <Briefcase className="w-10 h-10 text-[#0095f6]" />
-            </div>
-            <h3 className="text-xl font-bold text-white">نوع الحساب</h3>
-            <p className="text-sm text-gray-400 mt-2">
-                {accountType === 'personal' 
-                    ? 'حسابك الحالي شخصي. يمكنك التبديل للحصول على أدوات احترافية.' 
-                    : 'حسابك الحالي احترافي. يمكنك التبديل للعودة للحساب الشخصي.'}
-            </p>
-        </div>
-
-        <div className="space-y-3">
-            {accountType === 'personal' ? (
-                <button 
-                    onClick={() => setAccountType('professional')}
-                    className="w-full flex items-center justify-between p-4 bg-[#1c1c1c] rounded-xl border border-gray-800 hover:border-[#0095f6] transition-colors group"
-                >
-                    <div className="flex items-center gap-4">
-                        <div className="bg-gray-800 p-2.5 rounded-full group-hover:bg-[#0095f6] transition-colors"><Briefcase className="w-5 h-5 text-white" /></div>
-                        <div className="text-right">
-                            <p className="font-bold text-sm text-white">تبديل إلى حساب احترافي</p>
-                            <p className="text-xs text-gray-500">احصل على رؤى حول متابعيك وأدوات الأعمال</p>
-                        </div>
-                    </div>
-                    <ArrowLeft className="w-5 h-5 text-gray-500 rtl:rotate-180" />
-                </button>
-            ) : (
-                <button 
-                    onClick={() => setAccountType('personal')}
-                    className="w-full flex items-center justify-between p-4 bg-[#1c1c1c] rounded-xl border border-gray-800 hover:border-red-500 transition-colors group"
-                >
-                    <div className="flex items-center gap-4">
-                        <div className="bg-gray-800 p-2.5 rounded-full group-hover:bg-red-500 transition-colors"><UserCog className="w-5 h-5 text-white" /></div>
-                        <div className="text-right">
-                            <p className="font-bold text-sm text-white">تبديل إلى حساب شخصي</p>
-                            <p className="text-xs text-gray-500">ستفقد الوصول إلى الرؤى وأدوات الأعمال</p>
-                        </div>
-                    </div>
-                    <ArrowLeft className="w-5 h-5 text-gray-500 rtl:rotate-180" />
-                </button>
-            )}
-            
-            <button className="w-full flex items-center justify-between p-4 bg-[#1c1c1c] rounded-xl border border-gray-800 hover:border-gray-600 transition-colors">
-                 <div className="flex items-center gap-4">
-                        <div className="bg-gray-800 p-2.5 rounded-full"><Plus className="w-5 h-5 text-white" /></div>
-                        <div className="text-right">
-                            <p className="font-bold text-sm text-white">إضافة حساب احترافي جديد</p>
-                        </div>
-                    </div>
-                 <ArrowLeft className="w-5 h-5 text-gray-500 rtl:rotate-180" />
-            </button>
-        </div>
-    </div>
-  );
-
-  const renderLoginActivity = () => (
-      <div className="flex flex-col h-full">
-          {/* Mock Map */}
-          <div className="h-48 w-full bg-gray-800 relative overflow-hidden mb-4">
-              <img 
-                src="https://media.wired.com/photos/59269cd37034dc5f91bec0f1/191:100/w_1280,c_limit/GoogleMapTA.jpg" 
-                className="w-full h-full object-cover opacity-60" 
-              />
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                  <div className="w-32 h-32 bg-[#0095f6]/20 rounded-full animate-ping absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
-                  <div className="relative bg-[#0095f6] border-2 border-white p-1 rounded-full shadow-lg">
-                      <MapPin className="w-5 h-5 text-white" />
-                  </div>
-              </div>
-              <div className="absolute bottom-2 right-2 bg-black/60 px-2 py-1 rounded text-[10px] text-white backdrop-blur-md">الرياض، السعودية</div>
-          </div>
-
-          <div className="px-4 pb-4 space-y-4">
-              <h3 className="text-sm font-bold text-gray-400">الأماكن التي سجلت الدخول منها</h3>
-              
-              {/* Current Device */}
-              <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center">
-                          <Smartphone className="w-5 h-5 text-green-500" />
-                      </div>
-                      <div>
-                          <p className="text-sm font-bold text-white flex items-center gap-2">
-                              Riyadh, Saudi Arabia
-                              <span className="text-[10px] bg-green-500/20 text-green-500 px-1.5 rounded">هذا الجهاز</span>
-                          </p>
-                          <p className="text-[10px] text-gray-500">iPhone 13 Pro • نشط الآن</p>
-                      </div>
-                  </div>
-              </div>
-
-              <div className="h-px bg-gray-800"></div>
-
-              {/* Other Devices */}
-              {activeDevices.filter(d => !d.active).map(device => (
-                  <div key={device.id} className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center">
-                              <device.icon className={`w-6 h-6 ${device.active ? 'text-green-500' : 'text-gray-400'}`} />
-                          </div>
-                          <div>
-                              <p className="text-sm font-bold text-white">{device.location}</p>
-                              <p className="text-[10px] text-gray-500">{device.name} • {device.lastActive}</p>
-                          </div>
-                      </div>
-                      <button className="text-gray-500 hover:text-white"><MoreHorizontalIcon /></button>
-                  </div>
-              ))}
-
-              <button className="w-full text-center text-[#0095f6] text-xs font-bold mt-4">تسجيل الخروج من كل الجلسات الأخرى</button>
-          </div>
-      </div>
-  );
-
-  const renderSecurityEmails = () => (
-      <div className="flex flex-col h-full">
-          <div className="p-4 text-center">
-              <p className="text-sm text-gray-400 leading-relaxed">
-                  نرسل إليك رسائل البريد الإلكتروني الأمني والخاص بتسجيل الدخول خلال آخر 14 يوماً. استخدم هذه القائمة للتحقق من أن الرسائل واردة منا.
-              </p>
-          </div>
-          
-          <div className="flex border-b border-gray-800">
-              <button 
-                onClick={() => setEmailTab('security')} 
-                className={`flex-1 pb-3 text-sm font-bold transition-colors border-b-2 ${emailTab === 'security' ? 'text-white border-white' : 'text-gray-500 border-transparent'}`}
-              >
-                  الأمان
-              </button>
-              <button 
-                onClick={() => setEmailTab('other')} 
-                className={`flex-1 pb-3 text-sm font-bold transition-colors border-b-2 ${emailTab === 'other' ? 'text-white border-white' : 'text-gray-500 border-transparent'}`}
-              >
-                  أخرى
-              </button>
-          </div>
-
-          <div className="flex-1 p-4">
-              {emailTab === 'security' ? (
-                  <div className="space-y-4">
-                      <div className="flex items-center gap-3 bg-[#1c1c1c] p-3 rounded-xl border border-gray-800">
-                          <Mail className="w-5 h-5 text-gray-400" />
-                          <div className="flex-1">
-                              <p className="text-sm font-bold text-white">تم تسجيل دخول جديد</p>
-                              <p className="text-[10px] text-gray-500">تم الإرسال إلى {user.email} • منذ 2 يوم</p>
-                          </div>
-                      </div>
-                      <div className="flex items-center gap-3 bg-[#1c1c1c] p-3 rounded-xl border border-gray-800">
-                          <Mail className="w-5 h-5 text-gray-400" />
-                          <div className="flex-1">
-                              <p className="text-sm font-bold text-white">رمز استرداد حسابك</p>
-                              <p className="text-[10px] text-gray-500">تم الإرسال إلى {user.email} • منذ 1 أسبوع</p>
-                          </div>
-                      </div>
-                  </div>
-              ) : (
-                  <div className="text-center py-10 text-gray-500">
-                      <CheckCircle className="w-12 h-12 mx-auto mb-2 opacity-30" />
-                      <p className="text-sm">لا توجد رسائل أخرى</p>
-                  </div>
-              )}
-          </div>
-      </div>
-  );
-
-  const renderSecurityMain = () => (
-      <div className="space-y-4">
-          <SettingsGroup title="أمان تسجيل الدخول">
-              <SettingsRow 
-                  icon={<Key />} 
-                  label="كلمة المرور" 
-                  onClick={() => setSettingsPage('SECURITY_PASSWORD')} 
-              />
-              <SettingsRow 
-                  icon={<History />} 
-                  label="نشاط تسجيل الدخول" 
-                  subtext="الرياض، جدة..."
-                  onClick={() => setSettingsPage('SECURITY_ACTIVITY')} 
-              />
-              <SettingsToggle 
-                  icon={<Download />} 
-                  label="حفظ معلومات تسجيل الدخول" 
-                  isOn={settings.savedLogin} 
-                  onToggle={() => toggleSetting('savedLogin')} 
-              />
-          </SettingsGroup>
-
-          <SettingsGroup title="الفحوصات والبيانات">
-              <SettingsRow 
-                  icon={<Mail />} 
-                  label="رسائل البريد الإلكتروني" 
-                  onClick={() => setSettingsPage('SECURITY_EMAILS')} 
-              />
-              <SettingsRow 
-                  icon={<Shield />} 
-                  label="التحقق من الأمان" 
-                  onClick={() => setSettingsPage('SECURITY_CHECKUP')} 
-              />
-          </SettingsGroup>
-      </div>
-  );
-
-  const renderSecurityCheckup = () => (
-      <div className="flex flex-col h-full p-4">
-          <div className="text-center py-6">
-              <ShieldCheck className="w-16 h-16 text-green-500 mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-white">التحقق من الأمان</h3>
-              <p className="text-xs text-gray-400 mt-2 max-w-xs mx-auto">لقد قمنا بمراجعة إعدادات الأمان الخاصة بك، ويبدو كل شيء جيداً.</p>
-          </div>
-
-          <div className="space-y-2">
-              <div className="flex items-center justify-between p-4 bg-[#1c1c1c] rounded-xl border border-gray-800">
-                  <div className="flex items-center gap-3">
-                      <Key className="w-5 h-5 text-gray-400" />
-                      <span className="text-sm font-bold text-white">كلمة المرور قوية</span>
-                  </div>
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-              </div>
-              <div className="flex items-center justify-between p-4 bg-[#1c1c1c] rounded-xl border border-gray-800">
-                  <div className="flex items-center gap-3">
-                      <Mail className="w-5 h-5 text-gray-400" />
-                      <span className="text-sm font-bold text-white">البريد الإلكتروني صحيح</span>
-                  </div>
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-              </div>
-              <div className="flex items-center justify-between p-4 bg-[#1c1c1c] rounded-xl border border-gray-800">
-                  <div className="flex items-center gap-3">
-                      <PhoneIcon className="w-5 h-5 text-gray-400" />
-                      <span className="text-sm font-bold text-white">رقم الهاتف مرتبط</span>
-                  </div>
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-              </div>
-          </div>
-          
-          <button onClick={() => setSettingsPage('SECURITY_MAIN')} className="mt-auto w-full bg-[#1c1c1c] border border-gray-700 text-white py-3 rounded-xl font-bold">تم</button>
-      </div>
-  );
-
-  const renderDevicesMain = () => (
-      <div className="space-y-4">
-          <div className="flex flex-col items-center py-6 text-center">
-               <div className="w-16 h-16 bg-[#1c1c1c] rounded-full flex items-center justify-center mb-3">
-                   <Smartphone className="w-8 h-8 text-[#0095f6]" />
-               </div>
-               <h3 className="font-bold text-lg text-white">مكان تسجيل دخولك</h3>
-               <p className="text-xs text-gray-500 max-w-[200px]">نحن نراقب الأجهزة للحفاظ على أمان حسابك.</p>
-          </div>
-          <div className="bg-[#1c1c1c] rounded-xl border border-gray-800 overflow-hidden">
-               {activeDevices.map((device, idx) => (
-                   <div key={device.id}>
-                       <div className="p-4 flex items-center justify-between">
-                           <div className="flex items-center gap-3">
-                               <div className="p-2 bg-gray-800 rounded-lg">
-                                   <device.icon className={`w-6 h-6 ${device.active ? 'text-green-500' : 'text-gray-400'}`} />
-                               </div>
-                               <div>
-                                   <p className="text-sm font-bold text-white flex items-center gap-2">
-                                       {device.name}
-                                       {device.active && <span className="text-[10px] bg-green-500/20 text-green-500 px-1.5 rounded">الآن</span>}
-                                   </p>
-                                   <p className="text-[10px] text-gray-500 flex items-center gap-1">
-                                       <MapPin className="w-3 h-3" /> {device.location} • {device.active ? 'نشط الآن' : device.lastActive}
-                                   </p>
-                               </div>
-                           </div>
-                           {!device.active && (
-                               <button 
-                                  onClick={() => setActiveDevices(prev => prev.filter(d => d.id !== device.id))}
-                                  className="text-red-500 text-xs font-bold border border-red-500/30 px-2 py-1 rounded-lg hover:bg-red-500/10"
-                               >
-                                   خروج
-                               </button>
-                           )}
-                       </div>
-                       {idx < activeDevices.length - 1 && <div className="h-px bg-gray-800 mx-4"></div>}
-                   </div>
-               ))}
-          </div>
-      </div>
-  );
-
-  // --- NEW RENDER FUNCTIONS ---
   const renderPersonalInfo = () => (
-      <div className="space-y-4">
-          <div className="p-4 text-center">
-              <div className="w-20 h-20 rounded-full mx-auto mb-3 relative">
-                   <img src={user.avatar} className="w-full h-full rounded-full object-cover border-2 border-gray-700" />
-                   <button className="absolute bottom-0 right-0 bg-[#0095f6] p-1.5 rounded-full border-2 border-[#121212]">
-                       <Camera className="w-4 h-4 text-white" />
-                   </button>
-              </div>
-              <p className="text-gray-400 text-xs">تغيير صورة الملف الشخصي</p>
+      <div className="space-y-4 pt-4">
+          <div className="px-4 pb-4">
+            <h3 className="font-bold text-lg text-white mb-2">تفاصيل الاتصال</h3>
+            <p className="text-sm text-gray-400">تستخدم هذه المعلومات للتحقق من هويتك وتأمين حسابك. لن تظهر للعامة.</p>
           </div>
           
-          <SettingsGroup title="معلومات عامة">
-              <SettingsRow 
-                 icon={<UserCog />} 
-                 label="الاسم" 
-                 subtext={user.name} 
-                 onClick={() => {}} 
-              />
-              <SettingsRow 
-                 icon={<AtSign />} 
-                 label="اسم المستخدم" 
-                 subtext={user.username} 
-                 onClick={() => {}} 
-              />
-              <SettingsRow 
-                 icon={<FileText />} 
-                 label="النبذة (Bio)" 
-                 subtext={user.bio?.substring(0, 20) + '...'} 
-                 onClick={() => {}} 
-              />
-          </SettingsGroup>
-
-          <SettingsGroup title="معلومات خاصة">
+          <SettingsGroup title="معلومات التواصل">
               <SettingsRow 
                  icon={<Mail />} 
                  label="البريد الإلكتروني" 
@@ -798,429 +320,559 @@ const ProfileView: React.FC<ProfileViewProps> = ({ currentUser, onLogout, onUpda
               <SettingsRow 
                  icon={<PhoneIcon />} 
                  label="رقم الهاتف" 
-                 subtext={user.phone || '+966...'} 
+                 subtext={user.phone || 'غير مضاف'} 
                  onClick={() => openEditModal('phone')} 
-              />
-              <SettingsRow 
-                 icon={<Calendar />} 
-                 label="تاريخ الميلاد" 
-                 subtext={user.dob || '01/01/2000'} 
-                 onClick={() => openEditModal('dob')} 
               />
           </SettingsGroup>
       </div>
   );
 
-  const renderBlocked = () => (
-      <div className="p-4 space-y-4">
-          <div className="text-center py-4">
-              <p className="text-sm text-gray-400">الحسابات التي قمت بحظرها لن تتمكن من رؤية ملفك الشخصي أو التواصل معك.</p>
-          </div>
-          {blockedUsers.map(u => (
-              <div key={u.id} className="flex items-center justify-between bg-[#1c1c1c] p-3 rounded-xl border border-gray-800">
-                  <div className="flex items-center gap-3">
-                      <img src={u.avatar} className="w-10 h-10 rounded-full" />
-                      <div>
-                          <p className="font-bold text-sm text-white">{u.username}</p>
-                          <p className="text-xs text-gray-500">{u.name}</p>
+  const renderForgotPassword = () => {
+      if (forgotStep === 'METHOD') {
+          return (
+              <div className="p-4 space-y-4 animate-in slide-in-from-right">
+                  <h3 className="text-xl font-bold text-white mb-2">استعادة كلمة المرور</h3>
+                  <p className="text-gray-400 text-sm mb-6">اختر وسيلة لاستلام رمز التحقق</p>
+                  
+                  <button onClick={() => { setRecoveryMethod('email'); setForgotStep('INPUT'); }} className="w-full flex items-center justify-between p-4 bg-[#1c1c1c] rounded-xl border border-gray-700 hover:border-gray-500 transition-colors">
+                      <div className="flex items-center gap-3">
+                          <Mail className="w-5 h-5 text-gray-400" />
+                          <div className="text-right">
+                              <span className="block text-sm font-bold text-white">البريد الإلكتروني</span>
+                              <span className="text-xs text-gray-500">{user.email || 'user@example.com'}</span>
+                          </div>
                       </div>
-                  </div>
-                  <button className="text-xs font-bold border border-gray-600 px-3 py-1.5 rounded-lg hover:bg-white/10 text-white">
-                      إلغاء الحظر
+                      <ChevronRight className="w-5 h-5 rtl:rotate-180 text-gray-500" />
+                  </button>
+
+                  <button onClick={() => { setRecoveryMethod('phone'); setForgotStep('INPUT'); }} className="w-full flex items-center justify-between p-4 bg-[#1c1c1c] rounded-xl border border-gray-700 hover:border-gray-500 transition-colors">
+                       <div className="flex items-center gap-3">
+                          <Smartphone className="w-5 h-5 text-gray-400" />
+                          <div className="text-right">
+                              <span className="block text-sm font-bold text-white">رقم الهاتف</span>
+                              <span className="text-xs text-gray-500">{user.phone || '+966...'}</span>
+                          </div>
+                      </div>
+                      <ChevronRight className="w-5 h-5 rtl:rotate-180 text-gray-500" />
                   </button>
               </div>
-          ))}
-          <button className="w-full py-3 bg-[#1c1c1c] rounded-xl flex items-center justify-center gap-2 text-[#0095f6] font-bold text-sm mt-4 border border-gray-800 hover:bg-gray-800">
-              <Plus className="w-4 h-4" /> إضافة لحظر
+          );
+      }
+      
+      if (forgotStep === 'INPUT') {
+           return (
+              <div className="p-4 space-y-6 animate-in slide-in-from-right">
+                  <h3 className="text-xl font-bold text-white">تأكيد {recoveryMethod === 'email' ? 'البريد الإلكتروني' : 'رقم الهاتف'}</h3>
+                  <input 
+                    type={recoveryMethod === 'email' ? 'email' : 'tel'} 
+                    value={tempValue}
+                    onChange={(e) => setTempValue(e.target.value)}
+                    placeholder={recoveryMethod === 'email' ? 'user@example.com' : '+966...'}
+                    className="w-full bg-[#1c1c1c] border border-gray-700 rounded-xl p-4 text-white outline-none focus:border-white transition-colors"
+                  />
+                  <button onClick={() => setForgotStep('OTP')} className="w-full bg-[#0095f6] text-white py-3 rounded-xl font-bold">إرسال الرمز</button>
+              </div>
+           );
+      }
+
+      if (forgotStep === 'OTP') {
+           return (
+               <div className="p-4 space-y-6 animate-in slide-in-from-right">
+                    <h3 className="text-xl font-bold text-white text-center">أدخل رمز التحقق</h3>
+                    <p className="text-sm text-gray-400 text-center mb-4">تم إرسال الرمز إلى {tempValue || user.email}</p>
+                    <div className="flex justify-between gap-2 dir-ltr">
+                        {otpCode.map((digit, i) => (
+                              <input
+                                  key={i}
+                                  ref={el => { otpRefs.current[i] = el; }}
+                                  type="text"
+                                  maxLength={1}
+                                  value={digit}
+                                  onChange={(e) => handleOtpChange(i, e.target.value)}
+                                  onKeyDown={(e) => handleOtpKeyDown(i, e)}
+                                  className="w-12 h-14 bg-[#1c1c1c] border border-gray-700 rounded-lg text-center text-2xl font-bold text-white focus:border-[#0095f6] outline-none"
+                              />
+                          ))}
+                    </div>
+                    <button onClick={() => setForgotStep('NEW_PASS')} className="w-full bg-[#0095f6] text-white py-3 rounded-xl font-bold">تحقق</button>
+               </div>
+           );
+      }
+
+      if (forgotStep === 'NEW_PASS') {
+           return (
+               <div className="p-4 space-y-6 animate-in slide-in-from-right">
+                   <h3 className="text-xl font-bold text-white">كلمة المرور الجديدة</h3>
+                   <input type="password" placeholder="كلمة المرور الجديدة" className="w-full bg-[#1c1c1c] border border-gray-700 rounded-xl p-4 text-white outline-none" />
+                   <input type="password" placeholder="تأكيد كلمة المرور" className="w-full bg-[#1c1c1c] border border-gray-700 rounded-xl p-4 text-white outline-none" />
+                   <button onClick={() => setForgotStep('SUCCESS')} className="w-full bg-[#0095f6] text-white py-3 rounded-xl font-bold">تغيير كلمة المرور</button>
+               </div>
+           );
+      }
+
+      return (
+           <div className="p-4 flex flex-col items-center justify-center h-[50vh] animate-in slide-in-from-bottom">
+               <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mb-6">
+                   <CheckCircle className="w-10 h-10 text-green-500" />
+               </div>
+               <h3 className="text-2xl font-bold text-white mb-2">تم بنجاح!</h3>
+               <p className="text-gray-400 text-sm mb-8">تم تغيير كلمة المرور الخاصة بك.</p>
+               <button onClick={() => setSettingsPage('MAIN')} className="w-full bg-[#1c1c1c] text-white py-3 rounded-xl font-bold">العودة للإعدادات</button>
+           </div>
+      );
+  };
+
+  const renderAddProfessionalAccount = () => (
+      <div className="p-4 space-y-6 animate-in slide-in-from-right h-full flex flex-col">
+          <div className="text-center mb-6">
+               <div className="w-20 h-20 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                   <Briefcase className="w-10 h-10 text-blue-500" />
+               </div>
+               <h3 className="text-2xl font-bold text-white">حساب احترافي</h3>
+               <p className="text-gray-400 text-sm mt-2">احصل على أدوات وتحليلات إضافية للوصول لجمهورك.</p>
+          </div>
+          
+          <div className="space-y-4">
+              <label className="text-sm font-bold text-gray-300 block">اختر فئة</label>
+              <div className="grid grid-cols-2 gap-3">
+                  {['فنان', 'مدون', 'تعليم', 'صحة', 'موسيقي', 'مصور'].map(cat => (
+                      <button 
+                          key={cat}
+                          onClick={() => setProfCategory(cat)}
+                          className={`p-3 rounded-xl text-sm font-medium border transition-colors ${profCategory === cat ? 'bg-blue-600 border-blue-600 text-white' : 'bg-[#1c1c1c] border-gray-700 text-gray-300'}`}
+                      >
+                          {cat}
+                      </button>
+                  ))}
+              </div>
+          </div>
+
+          <div className="flex-1"></div>
+
+          <button 
+              disabled={!profCategory || profLoading}
+              onClick={() => {
+                  setProfLoading(true);
+                  setTimeout(() => {
+                      setProfLoading(false);
+                      setAccountType('professional');
+                      setSettingsPage('MAIN');
+                  }, 1500);
+              }}
+              className={`w-full py-4 rounded-xl font-bold text-white transition-all ${!profCategory ? 'bg-gray-800 text-gray-500' : 'bg-[#0095f6]'}`}
+          >
+              {profLoading ? 'جاري التحويل...' : 'تحويل إلى حساب احترافي'}
           </button>
       </div>
   );
 
-  const renderCloseFriends = () => (
-      <div className="flex flex-col h-full">
-          <div className="p-4 text-center border-b border-gray-800">
-              <p className="text-sm text-gray-400">
-                  نحن لا نرسل إشعارات عند تحرير قائمة الأصدقاء المقربين.
-              </p>
-          </div>
-          <div className="p-4 space-y-4 flex-1 overflow-y-auto">
-              <div className="relative mb-4">
-                   <Search className="absolute right-3 top-2.5 w-4 h-4 text-gray-500" />
-                   <input type="text" placeholder="بحث" className="w-full bg-[#1c1c1c] rounded-xl py-2 pr-9 pl-3 text-sm text-white outline-none placeholder-gray-500" />
-              </div>
+  const renderDeleteAccount = () => {
+    if (deleteVerifyStep === 'SELECT_METHOD') {
+        return (
+            <div className="p-4 space-y-6 animate-in slide-in-from-right">
+                <div className="text-center mb-6">
+                    <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+                    <h3 className="text-xl font-bold text-white">{deleteType === 'DISABLE' ? 'تعطيل الحساب مؤقتاً' : 'حذف الحساب نهائياً'}</h3>
+                    <p className="text-sm text-gray-400 mt-2">
+                        {deleteType === 'DISABLE' 
+                            ? 'سيتم إخفاء ملفك الشخصي وصورك وتعليقاتك حتى تعيد تفعيل الحساب عن طريق تسجيل الدخول مرة أخرى.' 
+                            : 'سيتم حذف كل بياناتك نهائياً ولن تتمكن من استعادتها.'}
+                    </p>
+                </div>
 
-              {closeFriends.map(friend => (
-                  <div key={friend.id} className="flex items-center justify-between hover:bg-[#1c1c1c] p-2 rounded-xl transition-colors">
-                      <div className="flex items-center gap-3">
-                          <img src={friend.avatar} className="w-12 h-12 rounded-full" />
-                          <div>
-                              <p className="font-bold text-sm text-white">{friend.name}</p>
-                              <p className="text-xs text-gray-500">{friend.username}</p>
-                          </div>
-                      </div>
-                      <div 
-                        onClick={() => setCloseFriends(prev => prev.map(f => f.id === friend.id ? { ...f, selected: !f.selected } : f))}
-                        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center cursor-pointer transition-colors ${friend.selected ? 'bg-[#0095f6] border-[#0095f6]' : 'border-gray-500'}`}
-                      >
-                          {friend.selected && <Check className="w-4 h-4 text-white" />}
-                      </div>
-                  </div>
-              ))}
-          </div>
-          <div className="p-4 border-t border-gray-800 bg-[#121212]">
-              <button onClick={() => setSettingsPage('MAIN')} className="w-full bg-[#0095f6] text-white py-3 rounded-xl font-bold">تم</button>
-          </div>
-      </div>
-  );
+                <div className="space-y-4">
+                     <label className="text-sm font-bold text-gray-300 block">لماذا تريد {deleteType === 'DISABLE' ? 'تعطيل' : 'حذف'} حسابك؟</label>
+                     <select 
+                        className="w-full bg-[#1c1c1c] border border-gray-700 rounded-xl p-3 text-white outline-none"
+                        value={deleteReason}
+                        onChange={(e) => setDeleteReason(e.target.value)}
+                     >
+                         <option value="">اختر سبباً...</option>
+                         <option value="break">أحتاج لاستراحة</option>
+                         <option value="privacy">مخاوف بشأن الخصوصية</option>
+                         <option value="trouble">مشكلة في استخدام التطبيق</option>
+                         <option value="other">شيء آخر</option>
+                     </select>
+                </div>
 
-  const renderWallet = () => (
-      <div className="p-4 space-y-6">
-          <div className="bg-gradient-to-br from-purple-900 to-blue-900 rounded-2xl p-6 shadow-lg border border-white/10 relative overflow-hidden">
-               <div className="absolute top-0 right-0 p-4 opacity-10"><CreditCard className="w-32 h-32 text-white" /></div>
-               <p className="text-sm text-blue-200 mb-1 font-medium">الرصيد الحالي</p>
-               <h2 className="text-4xl font-bold text-white mb-4">5,000 <span className="text-lg font-normal opacity-80">عملة</span></h2>
-               <div className="flex gap-3 relative z-10">
-                   <button className="flex-1 bg-white text-blue-900 py-2.5 rounded-xl font-bold text-sm shadow hover:bg-gray-100 transition-colors">شحن رصيد</button>
-                   <button className="flex-1 bg-blue-800/50 text-white py-2.5 rounded-xl font-bold text-sm border border-blue-400/30 hover:bg-blue-800 transition-colors">إهداء</button>
-               </div>
-          </div>
+                {deleteReason && (
+                    <div className="space-y-4 pt-4 border-t border-gray-800">
+                        <p className="text-sm font-bold text-white mb-2">للأمان، يرجى تأكيد هويتك:</p>
+                        
+                        <button 
+                            onClick={() => { setDeleteVerifyMethod('PASSWORD'); setDeleteVerifyStep('VERIFY'); }}
+                            className="w-full flex items-center justify-between p-4 bg-[#1c1c1c] rounded-xl border border-gray-700 hover:border-gray-500 transition-colors"
+                        >
+                            <div className="flex items-center gap-3">
+                                <Key className="w-5 h-5 text-gray-400" />
+                                <span className="text-sm font-bold">استخدام كلمة المرور</span>
+                            </div>
+                            <ChevronDown className="w-5 h-5 rotate-[-90deg] text-gray-500" />
+                        </button>
 
-          <div className="space-y-4">
-              <h3 className="font-bold text-white text-sm">سجل العمليات</h3>
-              {[1,2,3].map(i => (
-                  <div key={i} className="flex items-center justify-between bg-[#1c1c1c] p-3 rounded-xl border border-gray-800">
-                      <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-full ${i===1 ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}>
-                              {i===1 ? <ArrowLeft className="w-4 h-4 rotate-45" /> : <ArrowRight className="w-4 h-4 -rotate-45" />}
-                          </div>
-                          <div>
-                              <p className="text-sm font-bold text-white">{i===1 ? 'شحن رصيد' : 'إرسال هدية'}</p>
-                              <p className="text-[10px] text-gray-500">منذ {i} ساعة</p>
-                          </div>
-                      </div>
-                      <span className={`font-bold text-sm ${i===1 ? 'text-green-500' : 'text-white'}`}>
-                          {i===1 ? '+1000' : '-500'}
-                      </span>
-                  </div>
-              ))}
-          </div>
-      </div>
-  );
+                        <button 
+                            onClick={() => { setDeleteVerifyMethod('OTP'); setDeleteVerifyStep('VERIFY'); }}
+                            className="w-full flex items-center justify-between p-4 bg-[#1c1c1c] rounded-xl border border-gray-700 hover:border-gray-500 transition-colors"
+                        >
+                            <div className="flex items-center gap-3">
+                                <Smartphone className="w-5 h-5 text-gray-400" />
+                                <span className="text-sm font-bold">إرسال رمز (OTP)</span>
+                            </div>
+                            <ChevronDown className="w-5 h-5 rotate-[-90deg] text-gray-500" />
+                        </button>
+                    </div>
+                )}
+            </div>
+        );
+    } else {
+        // VERIFY STEP
+        return (
+            <div className="p-6 flex flex-col h-full animate-in slide-in-from-right">
+                <h3 className="text-xl font-bold text-white mb-6 text-center">تأكيد الهوية</h3>
+                
+                {deleteVerifyMethod === 'PASSWORD' ? (
+                    <div className="space-y-4 mb-8">
+                        <p className="text-sm text-gray-400">أدخل كلمة المرور للمتابعة.</p>
+                        <input 
+                            type="password" 
+                            placeholder="كلمة المرور"
+                            value={deletePassword}
+                            onChange={(e) => setDeletePassword(e.target.value)}
+                            className="w-full bg-[#1c1c1c] border border-gray-700 rounded-xl p-4 text-white outline-none focus:border-red-500 transition-colors"
+                        />
+                    </div>
+                ) : (
+                    <div className="space-y-4 mb-8">
+                        <p className="text-sm text-gray-400 text-center">أدخل الرمز الذي أرسلناه إلى {user.email || user.phone}</p>
+                        <div className="flex justify-between gap-2 dir-ltr">
+                             {otpCode.map((digit, i) => (
+                                  <input
+                                      key={i}
+                                      ref={el => { otpRefs.current[i] = el; }}
+                                      type="text"
+                                      maxLength={1}
+                                      value={digit}
+                                      onChange={(e) => handleOtpChange(i, e.target.value)}
+                                      onKeyDown={(e) => handleOtpKeyDown(i, e)}
+                                      className="w-12 h-14 bg-[#1c1c1c] border border-gray-700 rounded-lg text-center text-2xl font-bold text-white focus:border-red-500 outline-none"
+                                  />
+                              ))}
+                        </div>
+                    </div>
+                )}
 
-  const renderLanguageSelection = () => (
-      <div className="flex flex-col h-full">
+                <button 
+                    onClick={() => { setShowSettings(false); onLogout(); }}
+                    className="w-full bg-red-600 hover:bg-red-700 text-white py-4 rounded-xl font-bold shadow-lg shadow-red-900/20 mb-3"
+                >
+                    {deleteType === 'DISABLE' ? 'تعطيل الحساب' : 'حذف الحساب'}
+                </button>
+                <button onClick={() => setDeleteVerifyStep('SELECT_METHOD')} className="text-gray-400 text-sm font-bold">إلغاء</button>
+            </div>
+        );
+    }
+  };
+
+  const renderHelpCenter = () => (
+      <div className="h-full flex flex-col">
           <div className="p-4 border-b border-gray-800">
                <div className="bg-[#1c1c1c] rounded-xl flex items-center px-3 py-2 gap-2 border border-gray-800">
                    <Search className="w-4 h-4 text-gray-500" />
-                   <input 
-                      type="text" 
-                      placeholder={t('search_language')} 
-                      value={langSearch}
-                      onChange={(e) => setLangSearch(e.target.value)}
-                      className="bg-transparent border-none outline-none text-white text-sm w-full placeholder-gray-500" 
-                   />
+                   <input type="text" placeholder="كيف يمكننا مساعدتك؟" className="bg-transparent border-none outline-none text-white text-sm w-full placeholder-gray-500" />
                </div>
           </div>
-          <div className="flex-1 overflow-y-auto">
-               {SUPPORTED_LANGUAGES.filter(l => l.name.toLowerCase().includes(langSearch.toLowerCase()) || l.nativeName.includes(langSearch)).map(l => (
-                   <button 
-                      key={l.code}
-                      onClick={() => setLanguage(l.code)}
-                      className="w-full flex items-center justify-between p-4 hover:bg-[#1c1c1c] transition-colors border-b border-gray-900 group"
-                   >
-                       <div className="flex flex-col items-start">
-                           <span className="text-sm font-bold text-white">{l.nativeName}</span>
-                           <span className="text-xs text-gray-500">{l.name}</span>
-                       </div>
-                       {language.code === l.code && <Check className="w-5 h-5 text-[#0095f6]" />}
-                   </button>
-               ))}
+          <div className="flex-1 overflow-y-auto p-4 space-y-2">
+              <h3 className="font-bold text-white mb-2">مواضيع شائعة</h3>
+              {['كيفية استعادة الحساب', 'مشاكل تسجيل الدخول', 'إدارة الحساب', 'الخصوصية والأمان', 'الإبلاغ عن محتوى'].map((topic, i) => (
+                  <button key={i} className="w-full flex items-center justify-between p-4 bg-[#1c1c1c] rounded-xl border border-gray-800 hover:bg-gray-800 transition-colors text-right">
+                      <span className="text-sm text-white">{topic}</span>
+                      <ChevronRight className="w-4 h-4 text-gray-500 rtl:rotate-180" />
+                  </button>
+              ))}
+          </div>
+      </div>
+  );
+
+  const renderReportProblem = () => (
+      <div className="p-4 h-full flex flex-col animate-in slide-in-from-right">
+          {reportSent ? (
+              <div className="flex-1 flex flex-col items-center justify-center text-center">
+                  <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mb-4">
+                      <CheckCircle className="w-10 h-10 text-green-500" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white">شكراً لك!</h3>
+                  <p className="text-gray-400 text-sm mt-2 mb-8">ساعدتنا ملاحظاتك في تحسين NeL للجميع.</p>
+                  <button onClick={() => setSettingsPage('MAIN')} className="bg-[#1c1c1c] px-8 py-3 rounded-xl text-white font-bold">العودة للإعدادات</button>
+              </div>
+          ) : (
+              <>
+                  <h3 className="text-lg font-bold text-white mb-2">الإبلاغ عن مشكلة</h3>
+                  <p className="text-sm text-gray-400 mb-4">يرجى وصف المشكلة باختصار وإرفاق التفاصيل إذا أمكن.</p>
+                  <textarea 
+                      value={reportText}
+                      onChange={(e) => setReportText(e.target.value)}
+                      placeholder="ما الذي لا يعمل؟" 
+                      className="w-full h-40 bg-[#1c1c1c] border border-gray-800 rounded-xl p-4 text-white text-sm outline-none resize-none mb-4 focus:border-white"
+                  />
+                  <button 
+                      disabled={!reportText.trim()}
+                      onClick={() => { setReportSent(true); setTimeout(() => { setSettingsPage('MAIN'); setReportSent(false); setReportText(''); }, 3000); }}
+                      className={`w-full py-3 rounded-xl font-bold text-white transition-all ${reportText.trim() ? 'bg-[#0095f6]' : 'bg-gray-800 text-gray-500'}`}
+                  >
+                      إرسال بلاغ
+                  </button>
+              </>
+          )}
+      </div>
+  );
+
+  const renderTerms = () => (
+      <div className="p-4 h-full overflow-y-auto">
+          <h1 className="text-2xl font-bold text-white mb-4">شروط الاستخدام</h1>
+          <div className="space-y-4 text-sm text-gray-300 leading-relaxed">
+              <p>مرحباً بك في NeL. تحكم شروط الاستخدام هذه استخدامك لتطبيقنا.</p>
+              <h3 className="font-bold text-white">1. قبول الشروط</h3>
+              <p>بإنشاء حساب أو استخدام التطبيق، فإنك توافق على الالتزام بهذه الشروط.</p>
+              <h3 className="font-bold text-white">2. الخصوصية</h3>
+              <p>خصوصيتك مهمة بالنسبة لنا. يرجى قراءة سياسة الخصوصية لمعرفة كيفية جمعنا لبياناتك واستخدامها.</p>
+              <h3 className="font-bold text-white">3. سلوك المستخدم</h3>
+              <p>يجب عليك عدم استخدام الخدمة لأي غرض غير قانوني أو غير مصرح به. أنت المسؤول الوحيد عن سلوكك وأي بيانات ترسلها.</p>
+              <div className="h-20"></div>
           </div>
       </div>
   );
 
   const renderSettingsContent = () => {
       switch (settingsPage) {
-          case 'PERSONAL_INFO':
-              return renderPersonalInfo();
+          case 'PERSONAL_INFO': return renderPersonalInfo();
+          case 'SECURITY_MAIN': return renderSecurityMain();
+          case 'SECURITY_PASSWORD': return null; // Simplified for now
+          case 'SECURITY_FORGOT_PASSWORD': return renderForgotPassword();
+          case 'SECURITY_ACTIVITY': return null;
+          case 'SECURITY_EMAILS': return renderSecurityEmails();
+          case 'SECURITY_CHECKUP': return renderSecurityCheckup();
+          case 'DEVICES': return renderDevicesMain();
+          case 'BLOCKED': return renderBlocked();
+          case 'CLOSE_FRIENDS': return renderCloseFriends();
+          case 'WALLET': return renderWallet();
+          case 'LANGUAGE': return renderLanguageSelection();
+          case 'ACCOUNT_TYPE': return renderAccountType();
           
-          // SECURITY ROUTES
-          case 'SECURITY_MAIN':
-              return renderSecurityMain();
-          case 'SECURITY_PASSWORD':
-              return renderPasswordChange();
-          case 'SECURITY_FORGOT_PASSWORD':
-              return renderForgotPassword();
-          case 'SECURITY_ACTIVITY':
-              return renderLoginActivity();
-          case 'SECURITY_EMAILS':
-              return renderSecurityEmails();
-          case 'SECURITY_CHECKUP':
-              return renderSecurityCheckup();
+          // NEW PAGES
+          case 'ADD_PROFESSIONAL': return renderAddProfessionalAccount();
+          case 'DELETE_ACCOUNT': return renderDeleteAccount();
+          case 'HELP': return renderHelpCenter();
+          case 'REPORT': return renderReportProblem();
+          case 'TERMS': return renderTerms();
 
-          case 'DEVICES':
-              return renderDevicesMain();
-          case 'BLOCKED':
-              return renderBlocked();
-          case 'CLOSE_FRIENDS':
-              return renderCloseFriends();
-          case 'WALLET':
-              return renderWallet();
-          case 'LANGUAGE':
-              return renderLanguageSelection();
-          case 'ACCOUNT_TYPE':
-              return renderAccountType();
           default:
               return (
                   <>
-                        {/* Search Bar */}
                         <div className="bg-[#1c1c1c] rounded-xl flex items-center px-3 py-2.5 gap-2 border border-gray-800 sticky top-0 z-20 shadow-lg mb-6">
                              <div className="w-5 h-5 text-gray-500"><Settings className="w-5 h-5" /></div>
                              <input type="text" placeholder={t('search_settings')} className="bg-transparent border-none outline-none text-white text-sm w-full placeholder-gray-500" />
                         </div>
 
-                        {/* 1. Account Settings */}
                         <SettingsGroup title={t('account')}>
-                            <SettingsRow icon={<UserCog />} label={t('personal_info')} subtext="الاسم، البايو، الميلاد" onClick={() => setSettingsPage('PERSONAL_INFO')} />
-                            <SettingsRow icon={<ShieldCheck />} label={t('security')} subtext="كلمة المرور، المصادقة الثنائية" onClick={() => setSettingsPage('SECURITY_MAIN')} />
-                            <SettingsRow icon={<Smartphone />} label={t('devices')} onClick={() => setSettingsPage('DEVICES')} />
-                            <SettingsRow icon={<CreditCard />} label={t('wallet')} subtext="إدارة العملات" onClick={() => setSettingsPage('WALLET')} />
+                            <SettingsRow icon={<UserCog />} label={t('personal_info')} subtext="البريد الإلكتروني، رقم الهاتف" onClick={() => setSettingsPage('PERSONAL_INFO')} />
+                            <SettingsRow icon={<ShieldCheck />} label={t('security')} subtext="كلمة المرور، الأمان" onClick={() => setSettingsPage('SECURITY_MAIN')} />
                             <SettingsRow icon={<Briefcase />} label={t('account_type')} subtext={accountType === 'personal' ? 'شخصي' : 'احترافي'} onClick={() => setSettingsPage('ACCOUNT_TYPE')} />
-                            <SettingsRow icon={<AlertTriangle />} label={t('delete_account')} isDestructive onClick={() => {}} />
+                            <SettingsRow 
+                                icon={<AlertTriangle />} 
+                                label={t('delete_account')} 
+                                isDestructive 
+                                onClick={() => { setDeleteType('DISABLE'); setDeleteVerifyStep('SELECT_METHOD'); setSettingsPage('DELETE_ACCOUNT'); }} 
+                            />
                         </SettingsGroup>
 
-                        {/* 2. Privacy Settings */}
                         <SettingsGroup title={t('privacy')}>
-                             <SettingsToggle 
-                                icon={<Lock />} 
-                                label={t('private_account')} 
-                                isOn={settings.privateAccount} 
-                                onToggle={() => toggleSetting('privateAccount')} 
-                             />
-                             <SettingsToggle 
-                                icon={<Eye />} 
-                                label={t('activity_status')} 
-                                subtext="إظهار أنك متصل الآن"
-                                isOn={settings.activityStatus} 
-                                onToggle={() => toggleSetting('activityStatus')} 
-                             />
+                             <SettingsToggle icon={<Lock />} label={t('private_account')} isOn={settings.privateAccount} onToggle={() => toggleSetting('privateAccount')} />
                              <SettingsRow icon={<Ban />} label={t('blocked_accounts')} onClick={() => setSettingsPage('BLOCKED')} />
-                             <SettingsRow icon={<Users />} label={t('close_friends')} onClick={() => setSettingsPage('CLOSE_FRIENDS')} />
-                             <SettingsRow icon={<MessageCircle />} label={t('comments')} subtext="تحكم في من يعلق" onClick={() => {}} />
                         </SettingsGroup>
 
-                        {/* 3. Smart Features (Unique to App) */}
-                        <SettingsGroup title={t('smart_features')}>
-                             <SettingsToggle 
-                                icon={<Ghost />} 
-                                label={t('ghost_mode')} 
-                                subtext="تصفح دون ترك أثر في المشاهدات"
-                                isOn={settings.ghostMode} 
-                                onToggle={() => toggleSetting('ghostMode')} 
-                             />
-                             <SettingsToggle 
-                                icon={<Fingerprint />} 
-                                label={t('secure_mode')} 
-                                subtext="منع تصوير الشاشة"
-                                isOn={settings.secureMode} 
-                                onToggle={() => toggleSetting('secureMode')} 
-                             />
-                        </SettingsGroup>
-
-                        {/* 4. Notifications & App */}
-                        <SettingsGroup title={t('app_media')}>
-                             <SettingsToggle 
-                                icon={<BellRing />} 
-                                label={t('notifications')} 
-                                isOn={settings.notifications} 
-                                onToggle={() => toggleSetting('notifications')} 
-                             />
-                             <SettingsToggle 
-                                icon={<Moon />} 
-                                label={t('dark_mode')} 
-                                isOn={settings.darkMode} 
-                                onToggle={() => toggleSetting('darkMode')} 
-                             />
-                             <SettingsRow icon={<Globe />} label={t('language')} subtext={language.nativeName} onClick={() => setSettingsPage('LANGUAGE')} />
-                        </SettingsGroup>
-
-                        {/* 5. Support */}
                         <SettingsGroup title={t('support')}>
-                             <SettingsRow icon={<HelpCircle />} label={t('help_center')} onClick={() => {}} />
-                             <SettingsRow icon={<ShieldAlert />} label={t('report_problem')} onClick={() => {}} />
-                             <SettingsRow icon={<FileText />} label={t('terms')} onClick={() => {}} />
+                             <SettingsRow icon={<HelpCircle />} label={t('help_center')} onClick={() => setSettingsPage('HELP')} />
+                             <SettingsRow icon={<ShieldAlert />} label={t('report_problem')} onClick={() => setSettingsPage('REPORT')} />
                         </SettingsGroup>
 
-                        {/* Logout Actions */}
-                        <div className="space-y-2 pt-2 pb-8">
-                             <button className="w-full py-3 text-[#0095f6] font-bold text-sm bg-[#1c1c1c] rounded-xl hover:bg-[#262626] transition-colors border border-gray-800">
-                                 {t('add_account')}
-                             </button>
-                             <button 
-                                onClick={() => { setShowSettings(false); onLogout(); }}
-                                className="w-full py-3 text-red-500 font-bold text-sm bg-[#1c1c1c] rounded-xl hover:bg-[#262626] transition-colors flex items-center justify-center gap-2 border border-gray-800"
-                             >
-                                 <LogOut className="w-4 h-4" />
-                                 {t('logout')} {user.username}
-                             </button>
+                        <div className="space-y-1 pt-6 pb-12 px-2">
+                             <h3 className="text-xs font-bold text-gray-500 px-2 mb-2 uppercase tracking-wider">تسجيل الدخول</h3>
+                             <SettingsRow 
+                                icon={<Plus />} 
+                                label={t('add_account')} 
+                                isBlue
+                                onClick={() => { setShowSettings(false); onLogout(); }} 
+                                rightElement={null}
+                             />
+                             <SettingsRow 
+                                icon={<LogOut />} 
+                                label={`${t('logout')} ${user.username}`} 
+                                isDestructive
+                                onClick={() => setShowLogoutModal(true)} 
+                                rightElement={null}
+                             />
                         </div>
                         
                         <div className="text-center pb-6">
-                            <p className="text-xs text-gray-500 font-mono">NeL App v1.3.0 • 2024</p>
+                            <p className="text-xs text-gray-500 font-mono">NeL App v1.4.1</p>
                         </div>
                   </>
               );
       }
   };
 
+  const renderSecurityMain = () => ( <div className="p-4 text-white">Security Main (Placeholder)</div> );
+  const renderSecurityEmails = () => <div className="p-4 text-white">البريد الأمني</div>; 
+  const renderSecurityCheckup = () => <div className="p-4 text-white"><CheckCircle className="mx-auto w-12 h-12 text-green-500 mb-4" />حسابك آمن</div>;
+  const renderDevicesMain = () => <div className="p-4 text-white">قائمة الأجهزة</div>;
+  const renderBlocked = () => <div className="p-4 text-white">المستخدمون المحظورون</div>;
+  const renderCloseFriends = () => <div className="p-4 text-white">قائمة الأصدقاء المقربين</div>;
+  const renderWallet = () => <div className="p-4 text-white">المحفظة والرصيد</div>;
+  const renderLanguageSelection = () => <div className="p-4 text-white">قائمة اللغات</div>;
+  const renderAccountType = () => <div className="p-4 text-white">نوع الحساب</div>;
+
   const getPageTitle = () => {
       switch(settingsPage) {
           case 'MAIN': return t('settings_privacy');
           case 'PERSONAL_INFO': return t('personal_info');
-          case 'SECURITY_MAIN': return t('security');
-          case 'SECURITY_PASSWORD': return 'كلمة المرور';
-          case 'SECURITY_FORGOT_PASSWORD': return 'استرداد الحساب';
-          case 'SECURITY_ACTIVITY': return 'نشاط تسجيل الدخول';
-          case 'SECURITY_EMAILS': return 'رسائل البريد الإلكتروني';
-          case 'SECURITY_CHECKUP': return 'التحقق من الأمان';
-          case 'DEVICES': return t('devices');
-          case 'BLOCKED': return t('blocked_accounts');
-          case 'CLOSE_FRIENDS': return t('close_friends');
-          case 'WALLET': return t('wallet');
-          case 'LANGUAGE': return t('language');
-          case 'ACCOUNT_TYPE': return 'نوع الحساب';
+          case 'ADD_PROFESSIONAL': return 'حساب احترافي';
+          case 'DELETE_ACCOUNT': return 'تعطيل أو حذف';
+          case 'HELP': return t('help_center');
+          case 'REPORT': return t('report_problem');
+          case 'TERMS': return t('terms');
           default: return '';
       }
   };
 
   return (
-    <div className="h-full bg-[#0b0b0b] text-white flex flex-col relative overflow-hidden">
+    <div className="h-full bg-[#0b0b0b] text-white flex flex-col relative overflow-y-auto no-scrollbar">
       
-      {/* --- HEADER --- */}
-      <div className="flex justify-between items-center px-4 pt-4 pb-2 z-20">
-        <button 
-            onClick={() => setIsIncognito(!isIncognito)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-300 ${isIncognito ? 'bg-purple-500/20 text-purple-400 border border-purple-500/50' : 'bg-gray-800/50 text-gray-400 border border-transparent'}`}
-        >
-             {isIncognito ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-             <span className="text-xs font-bold">{isIncognito ? 'خفي' : 'علني'}</span>
-        </button>
+      {/* 1. FLUID HEADER */}
+      <div className="relative w-full h-[280px] overflow-hidden flex flex-col items-center justify-end shrink-0 pb-2">
+          {/* Blurred Dynamic Background */}
+          <div className="absolute inset-0 z-0">
+              <img src={user.avatar} className="w-full h-full object-cover blur-[50px] opacity-40 scale-110" />
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0b0b0b]/60 to-[#0b0b0b]"></div>
+          </div>
 
-        <div className="flex items-center gap-4">
-            <button className="relative">
-                <Bell className="w-6 h-6 text-white" />
-                <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-black"></span>
-            </button>
-            <Menu className="w-6 h-6 cursor-pointer text-white" onClick={() => { setSettingsPage('MAIN'); setShowSettings(true); }} />
-        </div>
+          {/* Top Actions */}
+          <div className="absolute top-4 left-0 right-0 flex justify-between items-start px-4 z-20">
+              <button 
+                  onClick={() => setIsIncognito(!isIncognito)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md border transition-all duration-300 ${isIncognito ? 'bg-purple-500/20 text-purple-400 border-purple-500/50' : 'bg-white/10 text-white border-white/20'}`}
+              >
+                   {isIncognito ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                   <span className="text-[10px] font-bold">{isIncognito ? 'خفي' : 'مرئي'}</span>
+              </button>
+              <div className="flex gap-3">
+                  <button className="p-2 bg-white/10 rounded-full backdrop-blur-md hover:bg-white/20 transition-colors">
+                      <Share2 className="w-5 h-5 text-white" />
+                  </button>
+                  <button onClick={() => { setSettingsPage('MAIN'); setShowSettings(true); }} className="p-2 bg-white/10 rounded-full backdrop-blur-md hover:bg-white/20 transition-colors">
+                      <Menu className="w-5 h-5 text-white" />
+                  </button>
+              </div>
+          </div>
+
+          {/* Avatar Container */}
+          <div className="relative z-10 mb-2 group cursor-pointer" onClick={() => { setEditForm(user); setShowEditProfile(true); }}>
+              <div className="relative w-24 h-24 rounded-full p-[3px] bg-gradient-to-tr from-blue-500 via-purple-500 to-pink-500 animate-pulse-slow shadow-2xl">
+                  <img src={user.avatar} className="w-full h-full rounded-full object-cover border-2 border-black" />
+                  <div className="absolute inset-0 bg-black/30 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Edit2 className="w-6 h-6 text-white" />
+                  </div>
+              </div>
+              <div className="absolute -bottom-1 -right-1 bg-[#1c1c1c] rounded-full p-1.5 border border-gray-700 shadow-lg text-sm">
+                  {currentMood.icon}
+              </div>
+          </div>
+
+          {/* Name & Bio */}
+          <div className="relative z-10 text-center px-8 w-full">
+              <h1 className="text-xl font-bold text-white tracking-wide">{user.name}</h1>
+              <p className="text-gray-400 text-xs font-mono mb-2">@{user.username}</p>
+              
+              <div 
+                onClick={() => setIsBioExpanded(!isBioExpanded)}
+                className={`text-sm text-gray-300 transition-all duration-300 cursor-pointer ${isBioExpanded ? '' : 'line-clamp-1 opacity-80'}`}
+              >
+                  {user.bio || "مرحبًا بك في ملفي الشخصي 👋"}
+                  {!isBioExpanded && <span className="text-[10px] text-gray-500 ml-1">(المزيد)</span>}
+              </div>
+          </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto no-scrollbar">
-        {/* --- PROFILE CARD --- */}
-        <div className="flex flex-col items-center pt-4 pb-6 px-6">
-            <div className="relative mb-4 group cursor-pointer" onClick={() => setShowMoodSelector(!showMoodSelector)}>
-                <div className={`absolute -inset-1 rounded-full bg-gradient-to-tr ${getRingColor()} blur opacity-75 group-hover:opacity-100 transition duration-1000 animate-spin-slow`}></div>
-                <div className="relative w-28 h-28 rounded-full p-[3px] bg-[#0b0b0b]">
-                    <img src={user.avatar} className="w-full h-full rounded-full object-cover border-2 border-[#1c1c1c]" />
-                </div>
-                <div className="absolute bottom-1 right-0 bg-[#1c1c1c] text-xl border-2 border-[#0b0b0b] rounded-full w-8 h-8 flex items-center justify-center shadow-lg">
-                    {currentMood.icon}
-                </div>
-            </div>
+      {/* 2. BUBBLE STATS & ACTIONS */}
+      <div className="flex flex-col gap-6 mt-2 z-10 relative">
+          {/* Stats Bubbles (Spaced Apart) */}
+          <div className="flex justify-around items-center w-full px-2">
+              <div className="flex flex-col items-center group cursor-pointer">
+                  <div className="w-14 h-14 rounded-2xl bg-[#1a1a1a] border border-gray-800 flex items-center justify-center mb-1 group-hover:bg-[#222] group-hover:scale-110 transition-all shadow-lg">
+                      <span className="text-lg font-black bg-clip-text text-transparent bg-gradient-to-br from-white to-gray-400">{user.postsCount}</span>
+                  </div>
+                  <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">منشور</span>
+              </div>
+              
+              <div className="flex flex-col items-center group cursor-pointer">
+                  <div className="w-16 h-16 rounded-2xl bg-[#1a1a1a] border border-gray-800 flex items-center justify-center mb-1 group-hover:bg-[#222] group-hover:scale-110 transition-all shadow-xl shadow-blue-900/10">
+                      <span className="text-xl font-black bg-clip-text text-transparent bg-gradient-to-br from-blue-400 to-purple-400">{user.followers}</span>
+                  </div>
+                  <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">متابع</span>
+              </div>
 
-            <div className="text-center relative mb-6">
-                <div className="flex items-center justify-center gap-2 mb-1">
-                    <h1 className="text-2xl font-bold text-white tracking-tight">{user.name}</h1>
-                    <button onClick={() => setShowMoodSelector(!showMoodSelector)} className="bg-gray-800/50 px-2 py-0.5 rounded-md text-[10px] text-gray-300 border border-gray-700">
-                        {currentMood.label}
-                    </button>
-                </div>
-                <p className="text-gray-500 text-sm font-medium">@{user.username}</p>
+              <div className="flex flex-col items-center group cursor-pointer">
+                  <div className="w-14 h-14 rounded-2xl bg-[#1a1a1a] border border-gray-800 flex items-center justify-center mb-1 group-hover:bg-[#222] group-hover:scale-110 transition-all shadow-lg">
+                      <span className="text-lg font-black bg-clip-text text-transparent bg-gradient-to-br from-white to-gray-400">{user.following}</span>
+                  </div>
+                  <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">يتابع</span>
+              </div>
+          </div>
 
-                {showMoodSelector && (
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-[#1c1c1c] border border-gray-800 rounded-xl p-2 shadow-xl z-30 w-48 animate-in zoom-in-95 duration-200">
-                        <div className="grid grid-cols-1 gap-1">
-                            {MOODS.map(m => (
-                                <button 
-                                    key={m.id}
-                                    onClick={() => { setCurrentMood(m); setShowMoodSelector(false); }}
-                                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-colors ${currentMood.id === m.id ? 'bg-[#0095f6]/20 text-[#0095f6]' : 'hover:bg-white/5 text-gray-300'}`}
-                                >
-                                    <span>{m.icon}</span>
-                                    <span>{m.label}</span>
-                                    {currentMood.id === m.id && <Check className="w-3 h-3 mr-auto" />}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )}
-            </div>
+          {/* Action Capsules */}
+          <div className="flex gap-3 w-full px-4">
+              <button onClick={() => { setEditForm(user); setShowEditProfile(true); }} className="flex-1 bg-white/5 backdrop-blur-sm border border-white/10 text-white py-3 rounded-2xl font-bold text-sm hover:bg-white/10 transition-colors shadow-lg">
+                  تعديل الملف
+              </button>
+              <button className="px-5 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl text-white hover:bg-white/10 transition-colors">
+                  <MessageCircle className="w-5 h-5" />
+              </button>
+          </div>
+      </div>
 
-            <div className="flex w-full justify-between items-center max-w-sm mb-8 bg-[#161616] p-4 rounded-2xl border border-gray-800/50">
-                <div className="flex flex-col items-center flex-1 cursor-pointer hover:bg-white/5 rounded-lg py-1 transition-colors">
-                    <span className="text-xl font-black text-white">{user.followers > 1000 ? (user.followers/1000).toFixed(1)+'k' : user.followers}</span>
-                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{t('followers')}</span>
-                </div>
-                <div className="w-[1px] h-8 bg-gray-800"></div>
-                <div className="flex flex-col items-center flex-1 cursor-pointer hover:bg-white/5 rounded-lg py-1 transition-colors">
-                    <span className="text-xl font-black text-white">{user.following}</span>
-                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{t('following')}</span>
-                </div>
-                <div className="w-[1px] h-8 bg-gray-800"></div>
-                <div className="flex flex-col items-center flex-1 cursor-pointer hover:bg-white/5 rounded-lg py-1 transition-colors">
-                    <span className="text-xl font-black text-white">{user.postsCount}</span>
-                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{t('content')}</span>
-                </div>
-            </div>
+      {/* 3. CONTENT TABS & GRID */}
+      <div className="flex-1 flex flex-col mt-6 bg-[#0b0b0b] rounded-t-[30px] border-t border-gray-900 relative">
+           <div className="flex justify-around items-center p-2 border-b border-gray-900 sticky top-0 bg-[#0b0b0b]/95 z-20 backdrop-blur-md rounded-t-[30px]">
+               {/* 1. My Videos */}
+               <button 
+                  onClick={() => setActiveTab('my_videos')}
+                  className={`relative px-4 py-3 flex items-center gap-2 text-sm font-bold transition-colors ${activeTab === 'my_videos' ? 'text-white' : 'text-gray-500'}`}
+               >
+                   <Video className="w-5 h-5" />
+                   {activeTab === 'my_videos' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-[#0095f6] rounded-full shadow-[0_0_10px_#0095f6]"></div>}
+               </button>
 
-            <div className="w-full max-w-sm mb-6 text-center">
-                 <p className="text-sm text-gray-300 leading-relaxed mb-3">
-                     {user.bio || 'محب للسفر والتصوير 📸 | أصنع المحتوى بشغف ✨'}
-                 </p>
-                 <div className="flex flex-wrap justify-center gap-2">
-                     {['سفر', 'تصوير', 'تكنولوجيا', 'قهوة'].map(tag => (
-                         <span key={tag} className="bg-gray-800/60 text-gray-400 text-[10px] px-2 py-1 rounded-md border border-gray-700">#{tag}</span>
-                     ))}
-                 </div>
-            </div>
+               {/* 2. Highlights (Saved Stories) */}
+               <button 
+                  onClick={() => setActiveTab('highlights')}
+                  className={`relative px-4 py-3 flex items-center gap-2 text-sm font-bold transition-colors ${activeTab === 'highlights' ? 'text-white' : 'text-gray-500'}`}
+               >
+                   <Star className="w-5 h-5" />
+                   {activeTab === 'highlights' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-[#0095f6] rounded-full shadow-[0_0_10px_#0095f6]"></div>}
+               </button>
 
-            <div className="flex gap-3 w-full max-w-sm mb-8">
-                <button 
-                    onClick={() => { setEditForm(user); setShowEditProfile(true); }}
-                    className="flex-1 bg-[#0095f6] text-white py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-blue-900/20 hover:scale-[1.02] transition-transform"
-                >
-                    {t('edit_profile')}
-                </button>
-                <button 
-                    onClick={() => { setSettingsPage('MAIN'); setShowSettings(true); }}
-                    className="bg-[#1c1c1c] text-white px-3.5 py-2.5 rounded-xl border border-gray-700 hover:bg-gray-800 transition-colors"
-                >
-                    <Settings className="w-5 h-5" />
-                </button>
-            </div>
-        </div>
-
-        {/* --- TABS & CONTENT --- */}
-        <div className="bg-[#0b0b0b] min-h-[500px] rounded-t-3xl border-t border-gray-900 relative">
-             <div className="sticky top-0 z-10 bg-[#0b0b0b]/95 backdrop-blur-md flex justify-around p-2 mb-2 border-b border-gray-800/50">
-                 {[
-                     { id: 'all', icon: Grid, label: 'الكل' },
-                     { id: 'video', icon: Video, label: 'فيديو' },
-                     { id: 'image', icon: ImageIcon, label: 'صور' },
-                     { id: 'text', icon: FileText, label: 'خواطر' }
-                 ].map(tab => (
-                     <button 
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id as any)}
-                        className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all ${activeTab === tab.id ? 'text-white bg-white/10' : 'text-gray-500 hover:text-gray-300'}`}
-                     >
-                         <tab.icon className={`w-5 h-5 ${activeTab === tab.id ? 'fill-current' : ''}`} />
-                     </button>
-                 ))}
-             </div>
-             
-             {renderSmartGrid()}
-        </div>
+               {/* 3. Saved Videos */}
+               <button 
+                  onClick={() => setActiveTab('saved_videos')}
+                  className={`relative px-4 py-3 flex items-center gap-2 text-sm font-bold transition-colors ${activeTab === 'saved_videos' ? 'text-white' : 'text-gray-500'}`}
+               >
+                   <Bookmark className="w-5 h-5" />
+                   {activeTab === 'saved_videos' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-[#0095f6] rounded-full shadow-[0_0_10px_#0095f6]"></div>}
+               </button>
+           </div>
+           
+           <div className="min-h-[500px] p-1">
+               {renderSmartGrid()}
+           </div>
       </div>
 
       {/* --- EDIT PROFILE MODAL --- */}
@@ -1231,111 +883,78 @@ const ProfileView: React.FC<ProfileViewProps> = ({ currentUser, onLogout, onUpda
                   <h2 className="font-bold text-lg">{t('edit_profile')}</h2>
                   <button onClick={handleSaveProfile} className="text-[#0095f6] font-bold"><Check className="w-6 h-6" /></button>
               </div>
-              
-              <div className="flex flex-col items-center py-6">
-                   <div className="w-24 h-24 rounded-full overflow-hidden mb-3 opacity-80 border border-gray-700 relative group">
-                        <img src={editForm.avatar} className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                             <Camera className="w-6 h-6 text-white" />
-                        </div>
-                   </div>
-                   <div className="flex gap-4">
-                        <input 
-                            type="file" 
-                            ref={fileInputRef} 
-                            className="hidden" 
-                            accept="image/png, image/jpeg, image/jpg"
-                            onChange={handleImageUpload}
-                        />
-                        <button 
-                            onClick={() => fileInputRef.current?.click()}
-                            className="text-[#0095f6] font-bold text-sm hover:text-[#0085dd] transition-colors bg-blue-500/10 px-4 py-2 rounded-full"
-                        >
-                            تغيير الصورة
-                        </button>
-                   </div>
-              </div>
+              <div className="p-4 space-y-6 overflow-y-auto">
+                  
+                  {/* Avatar Change Section */}
+                  <div className="flex flex-col items-center gap-4">
+                      <div className="relative group">
+                          <img src={editForm.avatar} className="w-24 h-24 rounded-full object-cover border border-[#262626]" />
+                      </div>
+                      <div className="flex flex-col gap-2 items-center">
+                          <button onClick={() => fileInputRef.current?.click()} className="text-[#0095f6] font-bold text-sm hover:text-[#0085dd]">
+                              تغيير صورة الملف الشخصي
+                          </button>
+                          {editForm.avatar !== ANONYMOUS_AVATAR && (
+                              <button onClick={handleRemovePhoto} className="text-red-500 font-bold text-sm hover:text-red-600">
+                                  إزالة الصورة الحالية
+                              </button>
+                          )}
+                          <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" />
+                      </div>
+                  </div>
 
-              <div className="px-4 space-y-4">
-                  <div className="space-y-1">
-                      <label className="text-xs text-gray-400">الاسم</label>
-                      <input 
-                         type="text" 
-                         value={editForm.name} 
-                         onChange={(e) => setEditForm({...editForm, name: e.target.value})}
-                         className="w-full bg-transparent border-b border-[#262626] py-2 outline-none focus:border-white transition-colors text-white"
-                      />
-                  </div>
-                  <div className="space-y-1">
-                      <label className="text-xs text-gray-400">اسم المستخدم</label>
-                      <input 
-                         type="text" 
-                         value={editForm.username} 
-                         onChange={(e) => setEditForm({...editForm, username: e.target.value})}
-                         className="w-full bg-transparent border-b border-[#262626] py-2 outline-none focus:border-white transition-colors text-white"
-                      />
-                  </div>
-                  <div className="space-y-1">
-                      <label className="text-xs text-gray-400">النبذة (Bio)</label>
-                      <textarea 
-                         value={editForm.bio} 
-                         onChange={(e) => setEditForm({...editForm, bio: e.target.value})}
-                         className="w-full bg-transparent border-b border-[#262626] py-2 outline-none focus:border-white transition-colors resize-none h-20 text-white"
-                      />
+                  <div className="space-y-4 pt-2">
+                      <div className="space-y-1"><label className="text-xs text-gray-400">الاسم</label><input type="text" value={editForm.name} onChange={(e) => setEditForm({...editForm, name: e.target.value})} className="w-full bg-transparent border-b border-[#262626] py-2 outline-none text-white focus:border-white transition-colors" /></div>
+                      <div className="space-y-1"><label className="text-xs text-gray-400">اسم المستخدم</label><input type="text" value={editForm.username} onChange={(e) => setEditForm({...editForm, username: e.target.value})} className="w-full bg-transparent border-b border-[#262626] py-2 outline-none text-white focus:border-white transition-colors" /></div>
+                      <div className="space-y-1"><label className="text-xs text-gray-400">النبذة</label><textarea value={editForm.bio} onChange={(e) => setEditForm({...editForm, bio: e.target.value})} className="w-full bg-transparent border-b border-[#262626] py-2 outline-none resize-none h-20 text-white focus:border-white transition-colors" /></div>
                   </div>
               </div>
           </div>
       )}
 
-      {/* --- SETTINGS SHEET (NAVIGATIONAL) --- */}
+      {/* --- LOGOUT CONFIRMATION MODAL --- */}
+      {showLogoutModal && (
+          <div className="absolute inset-0 z-[60] flex flex-col justify-end bg-black/60 backdrop-blur-sm" onClick={() => setShowLogoutModal(false)}>
+              <div className="w-full bg-[#262626] rounded-t-2xl p-4 animate-in slide-in-from-bottom duration-300 space-y-3" onClick={e => e.stopPropagation()}>
+                  <div className="w-12 h-1 bg-gray-500 rounded-full mx-auto mb-2"></div>
+                  <div className="text-center border-b border-gray-700 pb-4 mb-2">
+                      <h3 className="font-bold text-lg text-white">هل تريد تسجيل الخروج؟</h3>
+                      <p className="text-xs text-gray-400 mt-1">سيتم حفظ معلومات تسجيل الدخول الخاصة بك.</p>
+                  </div>
+                  <button onClick={() => { setShowLogoutModal(false); setShowSettings(false); onLogout(); }} className="w-full py-3 bg-[#1c1c1c] rounded-xl text-red-500 font-bold hover:bg-red-500/10 transition-colors">تسجيل الخروج من {user.username}</button>
+                  <button onClick={() => { setShowLogoutModal(false); setShowSettings(false); onLogout(); }} className="w-full py-3 bg-[#1c1c1c] rounded-xl text-white font-bold hover:bg-white/10 transition-colors">تسجيل الخروج من كل الحسابات</button>
+                  <button onClick={() => setShowLogoutModal(false)} className="w-full py-3 bg-transparent rounded-xl text-white font-bold hover:bg-white/5 transition-colors">إلغاء</button>
+              </div>
+          </div>
+      )}
+
+      {/* --- SETTINGS SHEET --- */}
       {showSettings && (
           <div className="absolute inset-0 z-50 flex flex-col justify-end">
                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={() => setShowSettings(false)}></div>
-               <div className="bg-[#121212] w-full rounded-t-3xl h-[85vh] animate-in slide-in-from-bottom duration-300 relative z-10 flex flex-col border-t border-gray-800 shadow-2xl">
-                    
-                    {/* Settings Header */}
+               <div className="bg-[#121212] w-full rounded-t-3xl h-[90vh] animate-in slide-in-from-bottom duration-300 relative z-10 flex flex-col border-t border-gray-800 shadow-2xl">
                     <div className="flex items-center justify-between p-4 border-b border-gray-800">
                         {settingsPage !== 'MAIN' ? (
                             <button onClick={() => {
-                                // Logic to handle back navigation correctly
                                 if (settingsPage.startsWith('SECURITY_') && settingsPage !== 'SECURITY_MAIN') {
-                                    if(settingsPage === 'SECURITY_FORGOT_PASSWORD' && forgotStep !== 'METHOD') {
-                                        setForgotStep('METHOD'); // Go back to method selection if inside flow
-                                    } else {
-                                        setSettingsPage('SECURITY_MAIN');
-                                    }
+                                    if(settingsPage === 'SECURITY_FORGOT_PASSWORD' && forgotStep !== 'METHOD') setForgotStep('METHOD');
+                                    else setSettingsPage('SECURITY_MAIN');
+                                } else if (settingsPage === 'DELETE_ACCOUNT' && deleteVerifyStep === 'VERIFY') {
+                                    setDeleteVerifyStep('SELECT_METHOD');
                                 } else {
                                     setSettingsPage('MAIN');
                                 }
-                            }} className="p-2 -ml-2 text-white hover:bg-gray-800 rounded-full">
-                                <ArrowRight className="w-5 h-5 rtl:rotate-180" />
-                            </button>
-                        ) : (
-                            <div className="w-8"></div>
-                        )}
-                        
-                        <div className="w-12 h-1 bg-gray-600 rounded-full absolute left-1/2 -translate-x-1/2 top-3"></div>
-                        <h2 className="font-bold text-white text-lg mt-2">{getPageTitle()}</h2>
-                        
-                        <button onClick={() => setShowSettings(false)} className="p-2 bg-gray-800 rounded-full hover:bg-gray-700 transition-colors mt-2">
-                             <X className="w-5 h-5 text-gray-300" />
-                        </button>
+                            }} className="p-2 -ml-2 text-white hover:bg-gray-800 rounded-full"><ArrowRight className="w-6 h-6 rtl:rotate-180" /></button>
+                        ) : (<div className="w-8"></div>)}
+                        <h2 className="font-bold text-white text-base mt-2">{getPageTitle()}</h2>
+                        <button onClick={() => setShowSettings(false)} className="p-2 bg-gray-800 rounded-full hover:bg-gray-700 transition-colors mt-2"><X className="w-5 h-5 text-gray-300" /></button>
                     </div>
-
-                    {/* Settings Content Area */}
-                    <div className="flex-1 overflow-y-auto p-4 space-y-6">
-                        {renderSettingsContent()}
-                    </div>
+                    <div className="flex-1 overflow-y-auto pb-8">{renderSettingsContent()}</div>
                </div>
           </div>
       )}
-
     </div>
   );
 };
-
-const MoreHorizontalIcon = () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
-);
 
 export default ProfileView;
