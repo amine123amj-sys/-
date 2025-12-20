@@ -1,4 +1,3 @@
-
 export interface Message {
   id: string;
   text?: string;
@@ -69,6 +68,21 @@ export interface Reel {
   };
   tags?: string[];
   category?: string;
+  music?: {
+    id: string;
+    name: string;
+    artist: string;
+    cover: string;
+    usageCount: string;
+  };
+}
+
+export interface SavedSound {
+  id: string;
+  name: string;
+  artist: string;
+  cover: string;
+  duration: string;
 }
 
 export interface User {
