@@ -1,3 +1,4 @@
+
 export interface Message {
   id: string;
   text?: string;
@@ -31,6 +32,17 @@ export type Tab = 'home' | 'explore' | 'create' | 'reels' | 'profile';
 
 export type StoryType = 'image' | 'video' | 'text';
 
+// Fix: Adding missing OverlayItem interface required by CreateVideo component
+export interface OverlayItem {
+  id: string;
+  type: 'text' | 'sticker';
+  content: string;
+  x: number;
+  y: number;
+  color?: string;
+  scale: number;
+}
+
 export interface StoryItem {
   id: string | number;
   type: StoryType;
@@ -40,6 +52,8 @@ export interface StoryItem {
   timestamp: number;
   duration: number; // in seconds
   viewers?: number;
+  // Fix: Adding optional overlays property to StoryItem
+  overlays?: OverlayItem[];
 }
 
 export interface Story {
@@ -68,21 +82,8 @@ export interface Reel {
   };
   tags?: string[];
   category?: string;
-  music?: {
-    id: string;
-    name: string;
-    artist: string;
-    cover: string;
-    usageCount: string;
-  };
-}
-
-export interface SavedSound {
-  id: string;
-  name: string;
-  artist: string;
-  cover: string;
-  duration: string;
+  // Fix: Adding optional overlays property to Reel
+  overlays?: OverlayItem[];
 }
 
 export interface User {

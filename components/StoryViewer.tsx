@@ -1,34 +1,52 @@
+
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Heart, Send, MoreHorizontal, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Heart, Send, ChevronLeft, ChevronRight, Search, Check, RotateCcw } from 'lucide-react';
 import { Story, StoryItem } from '../types';
+
+// Mock users for share functionality
+const SHARE_USERS = [
+  { id: 1, username: 'ali_gamer', name: 'Ali Hassan', avatar: 'https://picsum.photos/50/50?random=101' },
+  { id: 2, username: 'nour_beauty', name: 'Nour Style', avatar: 'https://picsum.photos/50/50?random=102' },
+  { id: 3, username: 'tech_master', name: 'Tech Reviewer', avatar: 'https://picsum.photos/50/50?random=103' },
+  { id: 4, username: 'chef_om', name: 'Chef Omar', avatar: 'https://picsum.photos/50/50?random=104' },
+  { id: 5, username: 'travel_jo', name: 'Jordan Travels', avatar: 'https://picsum.photos/50/50?random=105' },
+  { id: 6, username: 'sport_life', name: 'Captain Majed', avatar: 'https://picsum.photos/50/50?random=106' },
+];
 
 interface StoryViewerProps {
   stories: Story[];
   initialStoryIndex: number;
   onClose: () => void;
+  onStoryViewed: (storyId: string | number) => void;
 }
 
-const StoryViewer: React.FC<StoryViewerProps> = ({ stories, initialStoryIndex, onClose }) => {
+const StoryViewer: React.FC<StoryViewerProps> = ({ stories, initialStoryIndex, onClose, onStoryViewed }) => {
   const [currentStoryIndex, setCurrentStoryIndex] = useState(initialStoryIndex);
   const [currentItemIndex, setCurrentItemIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [message, setMessage] = useState('');
   
+  // Share State
+  const [showShareSheet, setShowShareSheet] = useState(false);
+  const [shareSearch, setShareSearch] = useState('');
+  const [sentUsers, setSentUsers] = useState<number[]>([]);
+
   const activeStory = stories[currentStoryIndex];
   const activeItem = activeStory?.items[currentItemIndex];
   
   const intervalRef = useRef<any>(null);
 
-  // Reset item index when switching users
+  // Mark story as viewed when it becomes active
   useEffect(() => {
-    setCurrentItemIndex(0);
-    setProgress(0);
-  }, [currentStoryIndex]);
+    if (activeStory && !activeStory.allViewed) {
+        onStoryViewed(activeStory.id);
+    }
+  }, [currentStoryIndex, activeStory, onStoryViewed]);
 
   // Handle Progress and Auto-Navigation
   useEffect(() => {
-    if (!activeItem || isPaused) return;
+    if (!activeItem || isPaused || showShareSheet) return;
 
     const step = 100 / (activeItem.duration * 20); // 50ms interval
     
@@ -43,7 +61,7 @@ const StoryViewer: React.FC<StoryViewerProps> = ({ stories, initialStoryIndex, o
     }, 50);
 
     return () => clearInterval(intervalRef.current);
-  }, [activeItem, currentItemIndex, currentStoryIndex, isPaused]);
+  }, [activeItem, currentItemIndex, currentStoryIndex, isPaused, showShareSheet]);
 
   const handleNextItem = () => {
     if (currentItemIndex < activeStory.items.length - 1) {
@@ -54,6 +72,8 @@ const StoryViewer: React.FC<StoryViewerProps> = ({ stories, initialStoryIndex, o
       // Next User Story
       if (currentStoryIndex < stories.length - 1) {
         setCurrentStoryIndex(prev => prev + 1);
+        setCurrentItemIndex(0); // Start from beginning of next story
+        setProgress(0);
       } else {
         onClose(); // End of all stories
       }
@@ -67,28 +87,44 @@ const StoryViewer: React.FC<StoryViewerProps> = ({ stories, initialStoryIndex, o
     } else {
       // Prev User Story
       if (currentStoryIndex > 0) {
-        setCurrentStoryIndex(prev => prev - 1);
-      } else {
-        // Stay on first item of first user or close? 
-        // Instagram usually stays or goes back to feed. Let's restart item.
+        const prevIndex = currentStoryIndex - 1;
+        setCurrentStoryIndex(prevIndex);
+        // Start from BEGINNING of previous story to allow re-watching
+        setCurrentItemIndex(0);
         setProgress(0); 
+      } else {
+        // Restart current story if at first item
+        setCurrentItemIndex(0);
+        setProgress(0);
       }
     }
+  };
+
+  const restartStory = () => {
+      setCurrentItemIndex(0);
+      setProgress(0);
   };
 
   const handleTouchStart = () => setIsPaused(true);
   const handleTouchEnd = () => setIsPaused(false);
 
   const sendReaction = (emoji: string) => {
-    // Logic to send reaction would go here
     console.log(`Reacted with ${emoji} to story ${activeItem?.id}`);
-    // Show some visual feedback
+  };
+
+  const toggleSendToUser = (id: number) => {
+      if (sentUsers.includes(id)) {
+          setSentUsers(prev => prev.filter(uid => uid !== id));
+      } else {
+          setSentUsers(prev => [...prev, id]);
+      }
   };
 
   if (!activeStory || !activeItem) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] bg-black flex flex-col">
+    // Adjusted Z-index to 50 so BottomNav (z-70) can sit on top
+    <div className="fixed inset-0 z-[50] bg-black flex flex-col pb-20"> 
       {/* Background Blur (optional aesthetic) */}
       <div className="absolute inset-0 bg-gray-900">
           {activeItem.type === 'image' && <img src={activeItem.url} className="w-full h-full object-cover opacity-50 blur-xl" />}
@@ -112,6 +148,7 @@ const StoryViewer: React.FC<StoryViewerProps> = ({ stories, initialStoryIndex, o
                 className="w-full h-full object-cover" 
                 autoPlay 
                 playsInline 
+                muted
                 onEnded={handleNextItem} 
             />
         )}
@@ -152,14 +189,14 @@ const StoryViewer: React.FC<StoryViewerProps> = ({ stories, initialStoryIndex, o
                     <span className="text-white/70 text-xs">{Math.floor((Date.now() - activeItem.timestamp) / 3600000)}h</span>
                 </div>
                 <div className="flex items-center gap-4">
-                    <button className="text-white"><MoreHorizontal /></button>
-                    <button onClick={onClose} className="text-white"><X className="w-6 h-6" /></button>
+                    <button onClick={(e) => { e.stopPropagation(); restartStory(); }} className="text-white bg-black/20 rounded-full p-1 backdrop-blur-sm hover:bg-black/40"><RotateCcw className="w-5 h-5" /></button>
+                    <button onClick={onClose} className="text-white bg-black/20 rounded-full p-1 backdrop-blur-sm hover:bg-black/40"><X className="w-6 h-6" /></button>
                 </div>
             </div>
         </div>
 
-        {/* Bottom Interaction Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 pb-8 bg-gradient-to-t from-black/80 to-transparent z-20">
+        {/* Bottom Interaction Overlay - Moved up slightly to clear Bottom Nav */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 pb-4 bg-gradient-to-t from-black/80 to-transparent z-20">
              {/* Quick Reactions (If not user's story) */}
              {!activeStory.isUser && (
                 <div className="flex justify-center gap-6 mb-4">
@@ -198,11 +235,71 @@ const StoryViewer: React.FC<StoryViewerProps> = ({ stories, initialStoryIndex, o
                  )}
                  
                  <button className="p-2 text-white"><Heart className="w-6 h-6" /></button>
-                 <button className="p-2 text-white"><Send className="w-6 h-6 -rotate-45 mb-1" /></button>
+                 <button 
+                    onClick={(e) => { e.stopPropagation(); setShowShareSheet(true); }}
+                    className="p-2 text-white"
+                 >
+                    <Send className="w-6 h-6 -rotate-45 mb-1" />
+                 </button>
              </div>
         </div>
 
       </div>
+
+      {/* SHARE SHEET OVERLAY */}
+      {showShareSheet && (
+          <div 
+              className="absolute inset-0 z-[70] flex flex-col justify-end bg-black/60 pb-20"
+              onClick={(e) => { e.stopPropagation(); setShowShareSheet(false); }}
+          >
+              <div 
+                  className="bg-[#1c1c1c] w-full rounded-t-2xl p-4 flex flex-col animate-in slide-in-from-bottom duration-300 gap-4 max-h-[60vh]"
+                  onClick={(e) => e.stopPropagation()}
+              >
+                  <div className="flex justify-center"><div className="w-10 h-1 bg-gray-500 rounded-full"></div></div>
+                  <div className="text-center font-bold text-white mb-2">إرسال إلى</div>
+
+                  {/* Search */}
+                  <div className="relative">
+                      <Search className="absolute right-3 top-2.5 w-4 h-4 text-gray-400" />
+                      <input 
+                          type="text"
+                          value={shareSearch}
+                          onChange={(e) => setShareSearch(e.target.value)}
+                          placeholder="بحث..."
+                          className="w-full bg-[#262626] rounded-xl py-2 pr-9 pl-3 text-sm text-white placeholder-gray-400 outline-none"
+                      />
+                  </div>
+
+                  {/* Users Grid */}
+                  <div className="grid grid-cols-4 gap-4 overflow-y-auto no-scrollbar py-2 px-1">
+                      {SHARE_USERS.filter(u => u.name.includes(shareSearch) || u.username.includes(shareSearch)).map(user => {
+                          const isSent = sentUsers.includes(user.id);
+                          return (
+                              <div key={user.id} className="flex flex-col items-center gap-2 cursor-pointer group" onClick={() => toggleSendToUser(user.id)}>
+                                  <div className="w-14 h-14 rounded-full bg-gray-700 overflow-hidden border border-gray-600 relative group-hover:scale-105 transition-transform">
+                                      <img src={user.avatar} className={`w-full h-full object-cover transition-opacity ${isSent ? 'opacity-50' : ''}`} />
+                                      {isSent && (
+                                          <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                                              <Check className="w-6 h-6 text-white" />
+                                          </div>
+                                      )}
+                                  </div>
+                                  <span className="text-[10px] text-gray-300 truncate w-full text-center">{user.name.split(' ')[0]}</span>
+                                  <button 
+                                      className={`text-[10px] px-3 py-1 rounded-full transition-all duration-300 font-bold w-full ${
+                                          isSent ? 'bg-gray-700 text-gray-400' : 'bg-[#0095f6] text-white hover:bg-[#0085dd]'
+                                      }`}
+                                  >
+                                      {isSent ? 'تم' : 'إرسال'}
+                                  </button>
+                              </div>
+                          );
+                      })}
+                  </div>
+              </div>
+          </div>
+      )}
     </div>
   );
 };

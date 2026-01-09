@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Chat } from "@google/genai";
 
 let chatSession: Chat | null = null;
@@ -13,6 +14,7 @@ const PERSONAS = [
 ];
 
 export const initializeAI = () => {
+  // Fix: Initializing GoogleGenAI using the correct named parameter object
   if (!ai && process.env.API_KEY) {
     ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   }
@@ -24,8 +26,9 @@ export const startNewChatSession = async (): Promise<string> => {
 
   const randomPersona = PERSONAS[Math.floor(Math.random() * PERSONAS.length)];
 
+  // Fix: Using gemini-3-flash-preview for basic text conversation tasks
   chatSession = ai.chats.create({
-    model: 'gemini-2.5-flash',
+    model: 'gemini-3-flash-preview',
     config: {
       systemInstruction: `You are a user on a random chat application specifically for Arabic speakers (but you can speak English if they do). 
       ${randomPersona}
@@ -41,6 +44,7 @@ export const startNewChatSession = async (): Promise<string> => {
   // Generate an initial greeting
   try {
     const response = await chatSession.sendMessage({ message: "Start the conversation now." });
+    // Fix: Using the .text property as per GenerateContentResponse guidelines
     return response.text || "مرحبا!";
   } catch (error) {
     console.error("Error starting chat:", error);
@@ -55,6 +59,7 @@ export const sendMessageToAI = async (message: string): Promise<string> => {
 
   try {
     const response = await chatSession.sendMessage({ message });
+    // Fix: Correctly accessing response text
     return response.text || "...";
   } catch (error) {
     console.error("Error sending message:", error);

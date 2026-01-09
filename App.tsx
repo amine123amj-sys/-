@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import BottomNav from './components/BottomNav';
 import ChatWindow from './components/ChatWindow';
@@ -9,9 +10,22 @@ import AuthScreen from './components/AuthScreen';
 import StoryViewer from './components/StoryViewer';
 import { Tab, ChatMode, Reel, Story, User, StoryItem } from './types';
 import { STRINGS } from './constants';
-import { Tags, Video, MessageSquareText, X, ArrowRight, Clapperboard, PlusSquare, Search, MessageCircle, Edit, ChevronDown } from 'lucide-react';
+import { Tags, Video, MessageSquareText, X, ArrowRight, Clapperboard, PlusSquare, Search, MessageCircle, Edit, ChevronDown, User as UserIcon, Heart, Share2, Grid } from 'lucide-react';
 
-const DUMMY_REELS: Reel[] = [
+const DUMMY_REELS: any[] = [
+  {
+    id: 'live_1',
+    videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
+    username: 'سارة_لايف',
+    userAvatar: 'https://picsum.photos/100/100?random=99',
+    description: 'دردشة ومسابقات وجوائز! 🎁 تعالوا',
+    likes: 0,
+    comments: 0,
+    shares: 0,
+    category: 'live',
+    isLive: true,
+    liveViewers: 4500
+  },
   {
     id: '1',
     videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
@@ -71,7 +85,7 @@ const INITIAL_STORIES: Story[] = [
       allViewed: false,
       items: [
           { id: 's2', type: 'text', content: 'صباح الخير جميعاً ☀️', background: 'linear-gradient(to right, #f12711, #f5af19)', timestamp: Date.now() - 7200000, duration: 5 },
-          { id: 's3', type: 'video', url: 'https://assets.mixkit.co/videos/preview/mixkit-girl-in-neon-sign-1232-large.mp4', timestamp: Date.now() - 7100000, duration: 10 }
+          { id: 's3', type: 'video', url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4', timestamp: Date.now() - 7100000, duration: 10 }
       ]
   },
   { 
@@ -87,10 +101,10 @@ const INITIAL_STORIES: Story[] = [
 ];
 
 const MOCK_CHAT_USERS = [
-    { id: 1, name: 'أحمد محمد', username: 'ahmed_m', msg: 'هلا، كيف الحال؟', time: 'الآن', active: true, avatar: 'https://picsum.photos/100/100?random=200' },
-    { id: 2, name: 'سارة', username: 'sara_art', msg: 'شكراً على المشاركة 🙏', time: '2د', active: false, avatar: 'https://picsum.photos/100/100?random=201' },
-    { id: 3, name: 'محمد علي', username: 'mo_ali', msg: 'أرسل لي الملف', time: '1س', active: true, avatar: 'https://picsum.photos/100/100?random=202' },
-    { id: 4, name: 'نور', username: 'nour_design', msg: 'فكرة ممتازة!', time: 'أمس', active: false, avatar: 'https://picsum.photos/100/100?random=203' },
+    { id: 1, name: 'أحمد محمد', username: 'ahmed_m', msg: 'هلا، كيف الحال؟', time: 'الآن', active: true, unread: true, avatar: 'https://picsum.photos/100/100?random=200' },
+    { id: 2, name: 'سارة', username: 'sara_art', msg: 'شكراً على المشاركة 🙏', time: '2د', active: false, unread: false, avatar: 'https://picsum.photos/100/100?random=201' },
+    { id: 3, name: 'محمد علي', username: 'mo_ali', msg: 'أرسل لي الملف', time: '1س', active: true, unread: true, avatar: 'https://picsum.photos/100/100?random=202' },
+    { id: 4, name: 'نور', username: 'nour_design', msg: 'فكرة ممتازة!', time: 'أمس', active: false, unread: false, avatar: 'https://picsum.photos/100/100?random=203' },
 ];
 
 const App: React.FC = () => {
@@ -99,6 +113,7 @@ const App: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<Tab>('home');
   const [isInChat, setIsInChat] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false); // New State for hiding Nav
   const [interests, setInterests] = useState<string[]>([]);
   const [currentInterestInput, setCurrentInterestInput] = useState('');
   const [chatMode, setChatMode] = useState<ChatMode>('text');
@@ -106,6 +121,9 @@ const App: React.FC = () => {
   // Search State
   const [messageSearchQuery, setMessageSearchQuery] = useState('');
   const [selectedFriend, setSelectedFriend] = useState<any>(null);
+
+  // Stranger Profile View State
+  const [viewingStrangerProfile, setViewingStrangerProfile] = useState<any>(null);
 
   // Data State
   const [reels, setReels] = useState<Reel[]>(DUMMY_REELS);
@@ -161,7 +179,6 @@ const App: React.FC = () => {
       setCurrentUser(updatedUser);
       localStorage.setItem('nel_user_session', JSON.stringify(updatedUser));
       
-      // Update Story Avatar if it exists
       setStories(prev => {
           const newStories = [...prev];
           if (newStories.length > 0 && newStories[0].isUser) {
@@ -191,15 +208,15 @@ const App: React.FC = () => {
   // Start Random Chat
   const startChat = (mode: ChatMode) => {
       setChatMode(mode);
-      setSelectedFriend(null); // Ensure no specific friend is selected
+      setSelectedFriend(null);
       setIsInChat(true);
   };
 
   // Start Direct Chat (WhatsApp Style)
   const openDirectChat = (user: any) => {
       setSelectedFriend(user);
-      setChatMode('text'); // Default to text for direct chat
-      setIsInChat(true); // Re-use the ChatWindow container
+      setChatMode('text');
+      setIsInChat(true);
   };
 
   const handlePublishReel = (newReel: Reel) => {
@@ -209,20 +226,67 @@ const App: React.FC = () => {
 
   const handlePublishStory = (newStoryItem: StoryItem) => {
       const updatedStories = [...stories];
-      // Add to "My Story" (Index 0)
       updatedStories[0] = {
           ...updatedStories[0],
-          items: [newStoryItem, ...updatedStories[0].items], // Add new item
+          items: [newStoryItem, ...updatedStories[0].items],
           allViewed: false
       };
       setStories(updatedStories);
       setShowStoryCreator(false);
   };
 
-  const handleLoadMoreReels = () => {
-      // Logic for loading more reels (simplified)
+  const handleStoryViewed = (storyId: string | number) => {
+      setStories(prev => prev.map(s => {
+          if (s.id === storyId && !s.allViewed) {
+              return { ...s, allViewed: true };
+          }
+          return s;
+      }));
   };
 
+  // --- RENDER PUBLIC PROFILE OVERLAY ---
+  const renderPublicProfile = () => {
+      if (!viewingStrangerProfile) return null;
+      return (
+          <div className="absolute inset-0 z-[80] bg-black animate-in slide-in-from-right duration-300 flex flex-col">
+              <div className="flex items-center p-4 border-b border-gray-900">
+                  <button onClick={() => setViewingStrangerProfile(null)} className="p-2"><ArrowRight className="w-6 h-6 text-white rtl:rotate-0 ltr:rotate-180" /></button>
+                  <h3 className="flex-1 text-center font-bold text-white">{viewingStrangerProfile.username}</h3>
+                  <div className="w-10"></div>
+              </div>
+              <div className="flex-1 overflow-y-auto p-6 flex flex-col items-center">
+                  <div className="w-24 h-24 rounded-full p-1 bg-gradient-to-tr from-[#0095f6] to-[#0033cc] mb-4">
+                      <img src={viewingStrangerProfile.avatar} className="w-full h-full rounded-full object-cover border-2 border-black" />
+                  </div>
+                  <h2 className="text-xl font-black text-white mb-1">{viewingStrangerProfile.name}</h2>
+                  <p className="text-gray-400 text-sm mb-6">@{viewingStrangerProfile.username}</p>
+                  
+                  <div className="flex w-full justify-around mb-8 border-y border-gray-900 py-4">
+                      <div className="text-center"><p className="font-bold text-white">1.2k</p><p className="text-[10px] text-gray-500 uppercase">متابعين</p></div>
+                      <div className="text-center"><p className="font-bold text-white">340</p><p className="text-[10px] text-gray-500 uppercase">يتابع</p></div>
+                      <div className="text-center"><p className="font-bold text-white">56</p><p className="text-[10px] text-gray-500 uppercase">فيديو</p></div>
+                  </div>
+
+                  <div className="w-full space-y-4">
+                      <button className="w-full bg-[#0095f6] text-white py-3 rounded-xl font-bold">متابعة</button>
+                      <button onClick={() => setViewingStrangerProfile(null)} className="w-full bg-[#262626] text-white py-3 rounded-xl font-bold">إرسال رسالة</button>
+                  </div>
+
+                  <div className="w-full mt-8">
+                       <h4 className="font-bold text-sm text-gray-500 mb-4 border-b border-gray-900 pb-2 flex items-center gap-2"><Grid className="w-4 h-4" /> المنشورات</h4>
+                       <div className="grid grid-cols-3 gap-1">
+                           {[...Array(9)].map((_, i) => (
+                               <div key={i} className="aspect-[3/4] bg-gray-900 rounded overflow-hidden">
+                                   <img src={`https://picsum.photos/200/300?random=${i+50}`} className="w-full h-full object-cover opacity-60" />
+                               </div>
+                           ))}
+                       </div>
+                  </div>
+              </div>
+          </div>
+      );
+  };
+  
   // --- RENDER ---
   
   if (isLoadingAuth) {
@@ -243,12 +307,16 @@ const App: React.FC = () => {
   // Handle Global Chat Window (Overlay)
   if (isInChat) {
       return (
-        <ChatWindow 
-            onBack={() => { setIsInChat(false); setSelectedFriend(null); }} 
-            interests={interests} 
-            mode={chatMode} 
-            targetUser={selectedFriend}
-        />
+        <div className="h-full w-full relative">
+            <ChatWindow 
+                onBack={() => { setIsInChat(false); setSelectedFriend(null); }} 
+                interests={interests} 
+                mode={chatMode} 
+                targetUser={selectedFriend}
+                onViewProfile={(u) => setViewingStrangerProfile(u)}
+            />
+            {renderPublicProfile()}
+        </div>
       );
   }
 
@@ -273,7 +341,6 @@ const App: React.FC = () => {
                  </div>
             </div>
 
-            {/* --- STORIES RAIL --- */}
             <div className="mt-2 border-b border-gray-900 pb-2">
                 <StoryRail 
                     stories={stories} 
@@ -282,7 +349,6 @@ const App: React.FC = () => {
                 />
             </div>
 
-            {/* Main Action Container */}
             <div className="flex-1 w-full max-w-sm mx-auto flex flex-col justify-center space-y-8 p-6">
                 <div className="text-center animate-in slide-in-from-bottom-4 duration-500">
                     <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
@@ -353,7 +419,7 @@ const App: React.FC = () => {
           </div>
         );
       case 'reels':
-        return <ReelsView reels={reels} onLoadMore={handleLoadMoreReels} />;
+        return <ReelsView reels={reels} onLoadMore={() => {}} onToggleFullScreen={(full) => setIsFullScreen(full)} />;
       case 'create':
         return <CreateVideo onClose={() => setActiveTab('home')} onPublishReel={handlePublishReel} onPublishStory={handlePublishStory} />;
       case 'explore': 
@@ -387,14 +453,21 @@ const App: React.FC = () => {
                             {user.active && <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-black"></div>}
                         </div>
                         <div className="flex-1">
-                            <h4 className="font-medium text-white text-sm">{user.name}</h4>
+                            <h4 className={`font-medium text-white text-sm ${user.unread ? 'font-black' : ''}`}>{user.name}</h4>
                             <div className="flex items-center gap-2">
-                                <p className={`text-sm truncate max-w-[200px] ${user.active ? 'text-white font-semibold' : 'text-gray-400'}`}>{user.msg}</p>
+                                <p className={`text-sm truncate max-w-[200px] ${user.unread ? 'text-white font-bold' : 'text-gray-400'}`}>
+                                    {user.msg}
+                                </p>
                                 <span className="text-gray-500 text-xs">• {user.time}</span>
                             </div>
                         </div>
-                        <div className="bg-[#262626] p-2 rounded-full">
-                            <Video className="w-5 h-5 text-gray-300" />
+                        <div className="flex items-center gap-3">
+                            {user.unread && (
+                                <div className="w-2.5 h-2.5 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.8)]"></div>
+                            )}
+                            <div className="bg-[#262626] p-2 rounded-full">
+                                <Video className="w-5 h-5 text-gray-300" />
+                            </div>
                         </div>
                      </div>
                  ))}
@@ -414,28 +487,27 @@ const App: React.FC = () => {
             {renderContent()}
         </div>
         
-        {/* --- STORY VIEWER OVERLAY --- */}
         {viewingStoryIndex !== null && (
             <StoryViewer 
                 stories={stories} 
                 initialStoryIndex={viewingStoryIndex} 
                 onClose={() => setViewingStoryIndex(null)} 
+                onStoryViewed={handleStoryViewed}
             />
         )}
 
-        {/* --- STORY CREATOR OVERLAY --- */}
         {showStoryCreator && (
             <div className="absolute inset-0 z-[60]">
                 <CreateVideo 
                     onClose={() => setShowStoryCreator(false)} 
-                    onPublishReel={handlePublishReel}
+                    onPublishReel={handlePublishReel} 
                     onPublishStory={handlePublishStory}
                     initialMode="STORY"
                 />
             </div>
         )}
         
-        {!isInChat && !selectedFriend && activeTab !== 'create' && viewingStoryIndex === null && !showStoryCreator && (
+        {!isInChat && !selectedFriend && activeTab !== 'create' && !showStoryCreator && !isFullScreen && (
             <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
         )}
     </div>

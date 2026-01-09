@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Home, Clapperboard, MessageCircle, Plus, User } from 'lucide-react';
 import { Tab } from '../types';
@@ -19,7 +20,8 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab }) => {
     `w-7 h-7 transition-all duration-200 ${activeTab === tab ? 'scale-110 opacity-100' : 'opacity-70'} ${isReels ? 'text-white shadow-black drop-shadow-md' : 'text-white'}`;
 
   return (
-    <div className={`fixed bottom-0 w-full flex justify-around items-center py-3 z-50 px-2 pb-6 md:pb-4 transition-all duration-300 ${navStyle}`}>
+    // Increased z-index to z-[70] to be above StoryViewer (z-[50])
+    <div className={`fixed bottom-0 w-full flex justify-around items-center py-3 z-[70] px-2 pb-6 md:pb-4 transition-all duration-300 ${navStyle}`}>
       {/* 1. Home */}
       <button onClick={() => setActiveTab('home')} className="p-2 active:scale-90 transition-transform">
         <Home className={getIconClass('home')} fill={activeTab === 'home' ? "currentColor" : "none"} />
