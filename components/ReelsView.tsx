@@ -28,11 +28,11 @@ interface HeartAnim {
     y: number;
     rotation: number;
     emoji?: string;
+    color?: string; // Added color property
 }
 
 type PaymentMethod = 'VISA' | 'PAYPAL';
 
-// --- COIN PACKAGES DATA (Realistic Pricing) ---
 const COIN_PACKAGES = [
     { id: 1, coins: 70, price: 1.29, label: '' },
     { id: 2, coins: 350, price: 6.49, label: 'شائع' },
@@ -42,7 +42,6 @@ const COIN_PACKAGES = [
     { id: 6, coins: 7000, price: 129.99, label: '' },
 ];
 
-// --- GIFTS DATA ---
 const AVAILABLE_GIFTS = [
     { id: 1, name: 'Rose', cost: 1, icon: '🌹' },
     { id: 2, name: 'GG', cost: 1, icon: '🎮' },
@@ -85,7 +84,6 @@ const INITIAL_SUGGESTED_USERS = [
   { id: 2, username: 'nour_beauty', name: 'Nour Style', avatar: 'https://picsum.photos/50/50?random=102', isFollowing: true },
 ];
 
-// --- VALIDATION HELPERS ---
 const luhnCheck = (val: string) => {
     let sum = 0;
     for (let i = 0; i < val.length; i++) {
@@ -105,21 +103,10 @@ const ReelsView: React.FC<ReelsViewProps> = ({ reels, onLoadMore, onToggleFullSc
   const [activeReelId, setActiveReelId] = useState<string>(reels[0]?.id || '');
   const [isMutedGlobal, setIsMutedGlobal] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isAnyLiveFullMode, setIsAnyLiveFullMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestedUsers, setSuggestedUsers] = useState(INITIAL_SUGGESTED_USERS);
   const [viewingAudio, setViewingAudio] = useState<Reel | null>(null);
-  const [isAudioSaved, setIsAudioSaved] = useState(false);
-
-  const toggleFollowUser = (userId: number) => {
-    setSuggestedUsers(prev => prev.map(user => 
-        user.id === userId ? { ...user, isFollowing: !user.isFollowing } : user
-    ));
-  };
-
-  const filteredUsers = suggestedUsers.filter(u => 
-      u.username.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      u.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -139,6 +126,11 @@ const ReelsView: React.FC<ReelsViewProps> = ({ reels, onLoadMore, onToggleFullSc
     return () => observer.disconnect();
   }, [reels, onLoadMore]);
 
+  const handleToggleFullScreenLocal = (full: boolean) => {
+      setIsAnyLiveFullMode(full);
+      if (onToggleFullScreen) onToggleFullScreen(full);
+  };
+
   const renderAudioPage = () => {
       if (!viewingAudio) return null;
       return (
@@ -151,7 +143,6 @@ const ReelsView: React.FC<ReelsViewProps> = ({ reels, onLoadMore, onToggleFullSc
                   <button className="p-2 -ml-2"><Share2 className="w-6 h-6 text-white" /></button>
               </div>
               <div className="flex-1 overflow-y-auto bg-black p-4">
-                 {/* ... content omitted for brevity, same as before ... */}
               </div>
           </div>
       );
@@ -160,11 +151,21 @@ const ReelsView: React.FC<ReelsViewProps> = ({ reels, onLoadMore, onToggleFullSc
   return (
     <div className="relative h-screen w-full bg-black">
       {viewingAudio && renderAudioPage()}
-      <div className="absolute top-4 left-0 right-0 z-40 flex justify-between items-center px-4 pointer-events-none">
-          <button onClick={() => setIsMutedGlobal(!isMutedGlobal)} className="w-8 h-8 flex items-center justify-center pointer-events-auto text-white drop-shadow-md transition-transform active:scale-90">{isMutedGlobal ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}</button>
-          <div className="flex justify-center items-center text-white drop-shadow-md pointer-events-auto font-bold"><span className="text-lg">الريلز</span></div>
-          <button onClick={() => setIsSearchOpen(true)} className="w-8 h-8 flex items-center justify-center pointer-events-auto text-white drop-shadow-md active:scale-90"><Search className="w-6 h-6" /></button>
-      </div>
+      
+      {!isAnyLiveFullMode && (
+          <div className="absolute top-4 left-0 right-0 z-40 flex justify-between items-center px-4 pointer-events-none">
+              <button onClick={() => setIsMutedGlobal(!isMutedGlobal)} className="w-8 h-8 flex items-center justify-center pointer-events-auto text-white drop-shadow-md transition-transform active:scale-90">
+                {isMutedGlobal ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
+              </button>
+              <div className="flex justify-center items-center text-white drop-shadow-md pointer-events-auto font-bold">
+                <span className="text-lg">الريلز</span>
+              </div>
+              <button onClick={() => setIsSearchOpen(true)} className="w-8 h-8 flex items-center justify-center pointer-events-auto text-white drop-shadow-md active:scale-90">
+                <Search className="w-6 h-6" />
+              </button>
+          </div>
+      )}
+
       {isSearchOpen && (
         <div className="absolute inset-0 z-[100] bg-[#121212] flex flex-col animate-in slide-in-from-right duration-300">
              <button onClick={() => setIsSearchOpen(false)} className="absolute top-4 right-4 text-white p-4">X</button>
@@ -175,7 +176,7 @@ const ReelsView: React.FC<ReelsViewProps> = ({ reels, onLoadMore, onToggleFullSc
       </svg>
       <div className="h-full w-full overflow-y-scroll snap-y snap-mandatory no-scrollbar">
         {reels.map((reel) => (
-          <ReelItem key={reel.id} reel={reel} isActive={activeReelId === reel.id} isMuted={isMutedGlobal} isSearchOpen={isSearchOpen} onOpenAudio={() => setViewingAudio(reel)} onToggleFullScreen={onToggleFullScreen} />
+          <ReelItem key={reel.id} reel={reel} isActive={activeReelId === reel.id} isMuted={isMutedGlobal} isSearchOpen={isSearchOpen} onOpenAudio={() => setViewingAudio(reel)} onToggleFullScreen={handleToggleFullScreenLocal} />
         ))}
       </div>
     </div>
@@ -213,30 +214,24 @@ const ReelItem: React.FC<ReelItemProps> = ({ reel, isActive, isMuted, isSearchOp
   const [showMoreOptions, setShowMoreOptions] = useState(false);
   const [selectedComment, setSelectedComment] = useState<Comment | null>(null);
   
-  // LIVE SPECIFIC STATES
   const [isLiveFullMode, setIsLiveFullMode] = useState(false);
   const [showGiftPanel, setShowGiftPanel] = useState(false);
   const [showRechargeModal, setShowRechargeModal] = useState(false);
   const [isHostFollowed, setIsHostFollowed] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   
-  // User Wallet & Gift State
   const [userCoins, setUserCoins] = useState(0);
   const [selectedPackage, setSelectedPackage] = useState<typeof COIN_PACKAGES[0] | null>(null);
   const [paymentStep, setPaymentStep] = useState<'SELECT_PACKAGE' | 'SELECT_METHOD' | 'CARD_DETAILS' | 'PAYPAL_LOGIN' | 'PROCESSING' | 'SUCCESS'>('SELECT_PACKAGE');
   
-  // Payment Form State
   const [cardNumber, setCardNumber] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
   const [cvc, setCvc] = useState('');
   const [cardName, setCardName] = useState('');
-  const [saveCard, setSaveCard] = useState(true);
   
-  // PayPal State
   const [paypalEmail, setPaypalEmail] = useState('');
   const [paypalPassword, setPaypalPassword] = useState('');
 
-  // Validation Errors
   const [formErrors, setFormErrors] = useState<{[key: string]: string}>({});
 
   const [liveChat, setLiveChat] = useState<Comment[]>([
@@ -284,18 +279,39 @@ const ReelItem: React.FC<ReelItemProps> = ({ reel, isActive, isMuted, isSearchOp
   const exitLiveMode = () => { setIsLiveFullMode(false); if (onToggleFullScreen) onToggleFullScreen(false); };
 
   const handleInteraction = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (isLive) {
-        if (!isLiveFullMode) { enterLiveMode(); } 
-        else {
-             const rect = e.currentTarget.getBoundingClientRect();
-             const newHeart: HeartAnim = { id: Date.now(), x: e.clientX - rect.left, y: e.clientY - rect.top, rotation: Math.random() * 50 - 25 };
-             setHearts(prev => [...prev, newHeart]);
-             setTimeout(() => setHearts(prev => prev.filter(h => h.id !== newHeart.id)), 800);
-        }
-        return;
-    }
     const now = Date.now();
     const timeDiff = now - lastClickTime.current;
+
+    if (isLive) {
+        if (!isLiveFullMode) { 
+            enterLiveMode(); 
+        } else {
+             // LIVE MODE: Only trigger hearts on Double Tap (Tapping twice quickly)
+             if (timeDiff < 300) {
+                 // Clean up potential single click timer if any (though unlikely needed here)
+                 if (clickTimeoutRef.current) { clearTimeout(clickTimeoutRef.current); clickTimeoutRef.current = null; }
+
+                 const rect = e.currentTarget.getBoundingClientRect();
+                 // Randomize colors for the hearts to look vibrant (Red, Pink, Blue, Gold)
+                 const colors = ['#ff0000', '#ff4081', '#0095f6', '#ffd700', '#ff6b6b'];
+                 const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+                 const newHeart: HeartAnim = { 
+                     id: Date.now(), 
+                     x: e.clientX - rect.left, 
+                     y: e.clientY - rect.top, 
+                     rotation: Math.random() * 60 - 30, // More rotation for fun
+                     color: randomColor
+                 };
+                 setHearts(prev => [...prev, newHeart]);
+                 setTimeout(() => setHearts(prev => prev.filter(h => h.id !== newHeart.id)), 800);
+             }
+        }
+        lastClickTime.current = now;
+        return;
+    }
+
+    // Normal Reel Logic
     if (timeDiff < 300) {
         if (clickTimeoutRef.current) { clearTimeout(clickTimeoutRef.current); clickTimeoutRef.current = null; }
         if (!isLiked) { setIsLiked(true); setLikesCount(prev => prev + 1); }
@@ -315,7 +331,6 @@ const ReelItem: React.FC<ReelItemProps> = ({ reel, isActive, isMuted, isSearchOp
   const handleSendComment = () => { if (!newComment.trim()) return; const newMsg: Comment = { id: Date.now().toString(), username: 'أنت', text: newComment, avatar: 'https://picsum.photos/50/50?random=me', time: 'الآن', likes: 0, isLiked: false }; if (replyingTo) { setComments(prev => prev.map(c => c.id === replyingTo.id ? { ...c, replies: [...(c.replies || []), newMsg] } : c)); setReplyingTo(null); } else { setComments(prev => [newMsg, ...prev]); } setNewComment(''); };
   const handleSendLiveChat = () => { if(!newComment.trim()) return; setLiveChat(prev => [...prev, { id: Date.now().toString(), username: 'أنت', text: newComment, avatar: 'https://picsum.photos/50/50?random=me', time: 'الآن', likes: 0, isLiked: false }]); setNewComment(''); };
 
-  // --- RECHARGE LOGIC ---
   const handlePackageSelect = (pkg: typeof COIN_PACKAGES[0]) => {
       setSelectedPackage(pkg);
       setPaymentStep('SELECT_METHOD');
@@ -332,44 +347,19 @@ const ReelItem: React.FC<ReelItemProps> = ({ reel, isActive, isMuted, isSearchOp
 
   const validateCardForm = (): boolean => {
       const errors: {[key: string]: string} = {};
-      
-      // Card Number Validation (Luhn)
       const cleanNum = cardNumber.replace(/\s/g, '');
       if (cleanNum.length < 13 || cleanNum.length > 19) {
           errors.cardNumber = 'رقم البطاقة غير صحيح (الطول)';
-      } else if (!luhnCheck(cleanNum)) { // In a real app, strict Luhn check
-          // For demo, we might want to be lenient, but let's simulate real validation
-          // NOTE: For testing, input a valid luhn number (e.g., 4242424242424242)
-          // Since users won't know valid numbers easily, let's relax this for the demo unless requested strict
-          // errors.cardNumber = 'رقم البطاقة غير صالح'; 
       }
-
-      // Expiry Validation
       if (!expiryDate || expiryDate.length !== 5) {
           errors.expiry = 'التاريخ غير مكتمل';
-      } else {
-          const [month, year] = expiryDate.split('/').map(Number);
-          const now = new Date();
-          const currentYear = parseInt(now.getFullYear().toString().substr(-2));
-          const currentMonth = now.getMonth() + 1;
-          
-          if (!month || month < 1 || month > 12) {
-              errors.expiry = 'الشهر غير صحيح';
-          } else if (!year || year < currentYear || (year === currentYear && month < currentMonth)) {
-              errors.expiry = 'البطاقة منتهية';
-          }
       }
-
-      // CVC Validation
       if (!cvc || cvc.length < 3) {
           errors.cvc = 'رمز CVC ناقص';
       }
-
-      // Name Validation
       if (!cardName || cardName.trim().length < 3) {
           errors.name = 'الاسم مطلوب';
       }
-
       setFormErrors(errors);
       return Object.keys(errors).length === 0;
   };
@@ -385,17 +375,12 @@ const ReelItem: React.FC<ReelItemProps> = ({ reel, isActive, isMuted, isSearchOp
   const processPayment = (type: 'CARD' | 'PAYPAL') => {
       const isValid = type === 'CARD' ? validateCardForm() : validatePayPalForm();
       if (!isValid) return;
-
       setPaymentStep('PROCESSING');
-      
-      // Simulate Bank API Latency
       setTimeout(() => {
           if (selectedPackage) {
             setUserCoins(prev => prev + selectedPackage.coins);
           }
           setPaymentStep('SUCCESS');
-          
-          // Reset
           setTimeout(() => {
             setShowRechargeModal(false);
             setPaymentStep('SELECT_PACKAGE');
@@ -409,7 +394,6 @@ const ReelItem: React.FC<ReelItemProps> = ({ reel, isActive, isMuted, isSearchOp
       }, 3000);
   };
 
-  // --- CARD INPUT FORMATTERS ---
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       let val = e.target.value.replace(/\D/g, '');
       val = val.substring(0, 16);
@@ -427,7 +411,6 @@ const ReelItem: React.FC<ReelItemProps> = ({ reel, isActive, isMuted, isSearchOp
       if (formErrors.expiry) setFormErrors({...formErrors, expiry: ''});
   };
 
-  // --- SEND GIFT LOGIC ---
   const handleSendGift = (gift: typeof AVAILABLE_GIFTS[0]) => {
       if (userCoins < gift.cost) {
           setShowRechargeModal(true);
@@ -458,7 +441,6 @@ const ReelItem: React.FC<ReelItemProps> = ({ reel, isActive, isMuted, isSearchOp
     <div id={reel.id} className="reel-section relative h-full w-full snap-start bg-black overflow-hidden select-none" onClick={handleInteraction} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       <video ref={videoRef} src={reel.videoUrl} className="h-full w-full object-cover" loop playsInline muted={isMuted} onTimeUpdate={() => setProgress((videoRef.current!.currentTime / videoRef.current!.duration) * 100)} />
       
-      {/* Visual Overlays */}
       <div className="absolute inset-0 pointer-events-none z-10">
           {(reel as any).overlays?.map((o: any) => (
               <div key={o.id} className="absolute transform -translate-x-1/2 -translate-y-1/2" style={{ left: `${o.x}%`, top: `${o.y}%` }}>
@@ -468,10 +450,22 @@ const ReelItem: React.FC<ReelItemProps> = ({ reel, isActive, isMuted, isSearchOp
       </div>
 
       {!isLive && <div className="absolute bottom-0 left-0 w-full h-1 bg-gray-600/50 z-20"><div className="h-full bg-white transition-all duration-100 ease-linear" style={{ width: `${progress}%` }}></div></div>}
+      
+      {/* Updated Heart Rendering for Live and Reels */}
       {hearts.map(h => (
           <div key={h.id} className="absolute z-[60] pointer-events-none" style={{ left: h.x, top: h.y }}>
-              <div className="animate-tiktok-heart flex items-center justify-center text-6xl" style={{ transform: `translate(-50%, -50%) rotate(${h.rotation}deg)` }}>
-                  {h.emoji ? h.emoji : <Heart className={`w-24 h-24 ${isLive ? 'text-[#0095f6] fill-[#0095f6]' : 'fill-[url(#blue-black-gradient)]'}`} />}
+              <div className="animate-tiktok-heart flex items-center justify-center" style={{ transform: `translate(-50%, -50%) rotate(${h.rotation}deg)` }}>
+                  {h.emoji ? (
+                      <div className="text-6xl">{h.emoji}</div>
+                  ) : (
+                      <Heart 
+                        className="w-16 h-16 drop-shadow-lg" 
+                        style={{ 
+                            fill: h.color || (isLive ? '#0095f6' : 'url(#blue-black-gradient)'), 
+                            color: h.color || (isLive ? '#0095f6' : 'white')
+                        }} 
+                      />
+                  )}
               </div>
           </div>
       ))}
@@ -519,7 +513,7 @@ const ReelItem: React.FC<ReelItemProps> = ({ reel, isActive, isMuted, isSearchOp
                         <div className="flex items-center gap-2">
                             <button className="w-11 h-11 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center border border-white/5 active:scale-90 transition-transform hover:bg-white/10 shadow-lg"><Share2 className="w-5 h-5 text-white" /></button>
                             <button onClick={() => setShowGiftPanel(true)} className="w-11 h-11 bg-gradient-to-tr from-pink-600 to-purple-600 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform animate-pulse border border-white/20"><Gift className="w-6 h-6 text-white" /></button>
-                            <button onClick={(e) => { e.stopPropagation(); setIsLiked(true); const rect = e.currentTarget.getBoundingClientRect(); const newHeart: HeartAnim = { id: Date.now(), x: rect.left + 20, y: rect.top, rotation: 0 }; setHearts(prev => [...prev, newHeart]); setTimeout(() => setHearts(prev => prev.filter(h => h.id !== newHeart.id)), 800); }} className="w-11 h-11 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center border border-white/5 active:scale-90 transition-transform shadow-lg"><Heart className="w-6 h-6 text-[#0095f6] fill-[#0095f6]" /></button>
+                            <button onClick={(e) => { e.stopPropagation(); setIsLiked(true); const rect = e.currentTarget.getBoundingClientRect(); const newHeart: HeartAnim = { id: Date.now(), x: rect.left + 20, y: rect.top, rotation: 0, color: '#0095f6' }; setHearts(prev => [...prev, newHeart]); setTimeout(() => setHearts(prev => prev.filter(h => h.id !== newHeart.id)), 800); }} className="w-11 h-11 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center border border-white/5 active:scale-90 transition-transform shadow-lg"><Heart className="w-6 h-6 text-[#0095f6] fill-[#0095f6]" /></button>
                         </div>
                     </div>
                     
@@ -598,14 +592,9 @@ const ReelItem: React.FC<ReelItemProps> = ({ reel, isActive, isMuted, isSearchOp
                                             <div className="space-y-4">
                                                 <input type="email" value={paypalEmail} onChange={e => setPaypalEmail(e.target.value)} placeholder="Email or mobile number" className={`w-full p-4 border rounded-lg text-black text-lg focus:border-blue-500 outline-none ${formErrors.email ? 'border-red-500' : 'border-gray-300'}`} />
                                                 {formErrors.email && <p className="text-red-600 text-xs px-1">{formErrors.email}</p>}
-                                                
                                                 <input type="password" value={paypalPassword} onChange={e => setPaypalPassword(e.target.value)} placeholder="Password" className={`w-full p-4 border rounded-lg text-black text-lg focus:border-blue-500 outline-none ${formErrors.password ? 'border-red-500' : 'border-gray-300'}`} />
                                                 {formErrors.password && <p className="text-red-600 text-xs px-1">{formErrors.password}</p>}
-                                                
                                                 <button onClick={() => processPayment('PAYPAL')} className="w-full bg-[#003087] text-white font-bold py-3.5 rounded-full text-lg hover:bg-[#00256b] transition-colors mt-4 shadow-lg">Log In</button>
-                                                <div className="text-center mt-4"><a href="#" className="text-[#003087] font-semibold text-sm hover:underline">Having trouble logging in?</a></div>
-                                                <div className="flex items-center gap-2 my-4"><div className="h-px bg-gray-300 flex-1"></div><span className="text-gray-500 text-sm">or</span><div className="h-px bg-gray-300 flex-1"></div></div>
-                                                <button className="w-full bg-[#E1E7EB] text-[#2C2E2F] font-bold py-3.5 rounded-full text-lg hover:bg-[#d2d8dd] transition-colors">Sign Up</button>
                                             </div>
                                         </div>
                                     )}
@@ -618,35 +607,22 @@ const ReelItem: React.FC<ReelItemProps> = ({ reel, isActive, isMuted, isSearchOp
                                                     <CreditCard className="absolute right-3 top-3 w-5 h-5 text-gray-500" />
                                                     <input type="text" placeholder="0000 0000 0000 0000" value={cardNumber} onChange={handleCardNumberChange} maxLength={19} className={`w-full bg-[#262626] border rounded-xl py-3 pr-10 pl-3 text-white placeholder-gray-600 outline-none focus:border-[#0095f6] text-left dir-ltr ${formErrors.cardNumber ? 'border-red-500' : 'border-gray-700'}`} />
                                                 </div>
-                                                {formErrors.cardNumber && <p className="text-red-500 text-xs absolute -bottom-5 right-1">{formErrors.cardNumber}</p>}
                                             </div>
-                                            
                                             <div className="flex gap-4 pt-2">
                                                 <div className="flex-1 space-y-1 relative">
                                                     <label className="text-xs text-gray-400 px-1">تاريخ الانتهاء</label>
                                                     <input type="text" placeholder="MM/YY" value={expiryDate} onChange={handleExpiryChange} maxLength={5} className={`w-full bg-[#262626] border rounded-xl py-3 px-3 text-white placeholder-gray-600 outline-none focus:border-[#0095f6] text-center ${formErrors.expiry ? 'border-red-500' : 'border-gray-700'}`} />
-                                                    {formErrors.expiry && <p className="text-red-500 text-[10px] absolute -bottom-4 right-0 w-full text-center">{formErrors.expiry}</p>}
                                                 </div>
                                                 <div className="flex-1 space-y-1 relative">
                                                     <label className="text-xs text-gray-400 px-1">CVC</label>
                                                     <input type="text" placeholder="123" value={cvc} onChange={(e) => { setCvc(e.target.value.replace(/\D/g, '').substring(0, 3)); if(formErrors.cvc) setFormErrors({...formErrors, cvc: ''}); }} maxLength={3} className={`w-full bg-[#262626] border rounded-xl py-3 px-3 text-white placeholder-gray-600 outline-none focus:border-[#0095f6] text-center ${formErrors.cvc ? 'border-red-500' : 'border-gray-700'}`} />
-                                                    {formErrors.cvc && <p className="text-red-500 text-[10px] absolute -bottom-4 right-0 w-full text-center">{formErrors.cvc}</p>}
                                                 </div>
                                             </div>
-
                                             <div className="space-y-1 pt-2">
                                                 <label className="text-xs text-gray-400 px-1">اسم حامل البطاقة</label>
                                                 <input type="text" placeholder="الاسم كما يظهر على البطاقة" value={cardName} onChange={(e) => { setCardName(e.target.value); if(formErrors.name) setFormErrors({...formErrors, name: ''}); }} className={`w-full bg-[#262626] border rounded-xl py-3 px-3 text-white placeholder-gray-600 outline-none focus:border-[#0095f6] ${formErrors.name ? 'border-red-500' : 'border-gray-700'}`} />
-                                                {formErrors.name && <p className="text-red-500 text-xs px-1">{formErrors.name}</p>}
                                             </div>
-
-                                            <div className="flex items-center gap-2 py-2 cursor-pointer" onClick={() => setSaveCard(!saveCard)}>
-                                                <div className={`w-5 h-5 rounded border flex items-center justify-center ${saveCard ? 'bg-[#0095f6] border-[#0095f6]' : 'border-gray-600'}`}>{saveCard && <Check className="w-3.5 h-3.5 text-white" />}</div>
-                                                <span className="text-xs text-gray-400">حفظ البطاقة للاستخدام المستقبلي</span>
-                                            </div>
-
                                             <button onClick={() => processPayment('CARD')} className="w-full bg-[#0095f6] text-white font-bold py-3.5 rounded-xl hover:bg-[#0085dd] transition-colors mt-2">دفع {selectedPackage?.price}$</button>
-                                            <div className="flex items-center justify-center gap-2 text-[10px] text-gray-500 pt-2"><Lock className="w-3 h-3" /><span>معاملة آمنة ومشفرة 100%</span></div>
                                         </div>
                                     )}
 
@@ -661,7 +637,6 @@ const ReelItem: React.FC<ReelItemProps> = ({ reel, isActive, isMuted, isSearchOp
                                         <div className="p-8 flex flex-col items-center justify-center text-center space-y-6 animate-in zoom-in duration-300">
                                             <div className="w-24 h-24 bg-green-500/20 rounded-full flex items-center justify-center border-2 border-green-500/50"><Check className="w-12 h-12 text-green-500" /></div>
                                             <div><h3 className="text-2xl font-black text-white mb-2">تم الشحن بنجاح!</h3><p className="text-gray-400">تمت إضافة <span className="text-yellow-500 font-bold">{selectedPackage?.coins} عملة</span> إلى رصيدك.</p></div>
-                                            <div className="bg-[#262626] rounded-xl p-4 w-full flex justify-between items-center border border-white/5"><span className="text-gray-400 text-sm">رصيدك الجديد</span><div className="flex items-center gap-2 text-yellow-500 font-bold text-xl"><Coins className="w-5 h-5 fill-yellow-500 text-yellow-500" /><span>{userCoins}</span></div></div>
                                             <button onClick={() => setShowRechargeModal(false)} className="w-full bg-white text-black font-bold py-3 rounded-xl hover:bg-gray-200 transition-colors">حسناً</button>
                                         </div>
                                     )}

@@ -100,7 +100,7 @@ const INITIAL_STORIES: Story[] = [
   },
 ];
 
-const MOCK_CHAT_USERS = [
+const MOCK_CHAT_USERS_DATA = [
     { id: 1, name: 'أحمد محمد', username: 'ahmed_m', msg: 'هلا، كيف الحال؟', time: 'الآن', active: true, unread: true, avatar: 'https://picsum.photos/100/100?random=200' },
     { id: 2, name: 'سارة', username: 'sara_art', msg: 'شكراً على المشاركة 🙏', time: '2د', active: false, unread: false, avatar: 'https://picsum.photos/100/100?random=201' },
     { id: 3, name: 'محمد علي', username: 'mo_ali', msg: 'أرسل لي الملف', time: '1س', active: true, unread: true, avatar: 'https://picsum.photos/100/100?random=202' },
@@ -113,27 +113,24 @@ const App: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<Tab>('home');
   const [isInChat, setIsInChat] = useState(false);
-  const [isFullScreen, setIsFullScreen] = useState(false); // New State for hiding Nav
+  const [isFullScreen, setIsFullScreen] = useState(false); 
   const [interests, setInterests] = useState<string[]>([]);
   const [currentInterestInput, setCurrentInterestInput] = useState('');
   const [chatMode, setChatMode] = useState<ChatMode>('text');
   
-  // Search State
   const [messageSearchQuery, setMessageSearchQuery] = useState('');
+  // تحويل مستخدمي الدردشة إلى حالة لحذف النقطة الزرقاء عند الضغط
+  const [chatUsers, setChatUsers] = useState(MOCK_CHAT_USERS_DATA);
   const [selectedFriend, setSelectedFriend] = useState<any>(null);
 
-  // Stranger Profile View State
   const [viewingStrangerProfile, setViewingStrangerProfile] = useState<any>(null);
 
-  // Data State
   const [reels, setReels] = useState<Reel[]>(DUMMY_REELS);
   const [stories, setStories] = useState<Story[]>(INITIAL_STORIES);
 
-  // Story Viewing State
   const [viewingStoryIndex, setViewingStoryIndex] = useState<number | null>(null);
   const [showStoryCreator, setShowStoryCreator] = useState(false);
 
-  // --- AUTH CHECK ON MOUNT ---
   useEffect(() => {
       const checkAuth = () => {
           const storedUser = localStorage.getItem('nel_user_session');
@@ -205,15 +202,17 @@ const App: React.FC = () => {
       setInterests(interests.filter(i => i !== interest));
   };
 
-  // Start Random Chat
   const startChat = (mode: ChatMode) => {
       setChatMode(mode);
       setSelectedFriend(null);
       setIsInChat(true);
   };
 
-  // Start Direct Chat (WhatsApp Style)
   const openDirectChat = (user: any) => {
+      // تعديل حالة المستخدم لإزالة النقطة الزرقاء
+      setChatUsers(prevUsers => 
+        prevUsers.map(u => u.id === user.id ? { ...u, unread: false } : u)
+      );
       setSelectedFriend(user);
       setChatMode('text');
       setIsInChat(true);
@@ -225,14 +224,31 @@ const App: React.FC = () => {
   };
 
   const handlePublishStory = (newStoryItem: StoryItem) => {
-      const updatedStories = [...stories];
-      updatedStories[0] = {
-          ...updatedStories[0],
-          items: [newStoryItem, ...updatedStories[0].items],
-          allViewed: false
-      };
-      setStories(updatedStories);
+      setStories(prev => {
+          const updatedStories = [...prev];
+          const userStoryIndex = updatedStories.findIndex(s => s.isUser);
+          if (userStoryIndex !== -1) {
+              updatedStories[userStoryIndex] = {
+                  ...updatedStories[userStoryIndex],
+                  items: [newStoryItem, ...updatedStories[userStoryIndex].items],
+                  allViewed: false
+              };
+          }
+          return updatedStories;
+      });
       setShowStoryCreator(false);
+  };
+
+  const handleQuickPublishStory = () => {
+      const quickItem: StoryItem = {
+          id: Date.now(),
+          type: 'image',
+          url: `https://picsum.photos/500/900?random=${Date.now()}`,
+          timestamp: Date.now(),
+          duration: 5,
+          viewers: 0
+      };
+      handlePublishStory(quickItem);
   };
 
   const handleStoryViewed = (storyId: string | number) => {
@@ -244,7 +260,6 @@ const App: React.FC = () => {
       }));
   };
 
-  // --- RENDER PUBLIC PROFILE OVERLAY ---
   const renderPublicProfile = () => {
       if (!viewingStrangerProfile) return null;
       return (
@@ -287,8 +302,6 @@ const App: React.FC = () => {
       );
   };
   
-  // --- RENDER ---
-  
   if (isLoadingAuth) {
       return (
           <div className="h-screen w-full bg-black flex items-center justify-center">
@@ -304,7 +317,6 @@ const App: React.FC = () => {
       return <AuthScreen onLogin={handleLogin} />;
   }
 
-  // Handle Global Chat Window (Overlay)
   if (isInChat) {
       return (
         <div className="h-full w-full relative">
@@ -345,7 +357,7 @@ const App: React.FC = () => {
                 <StoryRail 
                     stories={stories} 
                     onOpenStory={(index) => setViewingStoryIndex(index)}
-                    onCreateStory={() => setShowStoryCreator(true)}
+                    onCreateStory={handleQuickPublishStory} // تم التعديل للنشر الفوري
                 />
             </div>
 
@@ -423,7 +435,7 @@ const App: React.FC = () => {
       case 'create':
         return <CreateVideo onClose={() => setActiveTab('home')} onPublishReel={handlePublishReel} onPublishStory={handlePublishStory} />;
       case 'explore': 
-        const filteredUsers = MOCK_CHAT_USERS.filter(u => 
+        const filteredUsers = chatUsers.filter(u => 
             u.name.toLowerCase().includes(messageSearchQuery.toLowerCase()) || 
             u.username.toLowerCase().includes(messageSearchQuery.toLowerCase())
         );
