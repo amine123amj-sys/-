@@ -4,65 +4,68 @@ import { GoogleGenAI, Chat } from "@google/genai";
 let chatSession: Chat | null = null;
 let ai: GoogleGenAI | null = null;
 
-const PERSONAS = [
-  "You are a funny college student who loves pizza.",
-  "You are a philosophical traveler currently in Japan.",
-  "You are a sarcastic barista who hates coffee.",
-  "You are a friendly artist who loves painting sunsets.",
-  "You are a tech enthusiast excited about the future.",
-  "You are a quiet bookworm who recommends novels.",
+// قاعدة بيانات شخصيات "أونلاين" لضمان تنوع الدردشة العالمية
+const GLOBAL_PERSONAS = [
+  "شاب سعودي من الرياض، عصري، يحب التقنية والسفر، يتحدث بلهجة بيضاء بسيطة.",
+  "بنت مصرية، مثقفة، تحب الضحك والدردشة عن الأفلام والترندات.",
+  "شاب مغربي، يتحدث العربية والفرنسية، مهتم بالرياضة والموسيقى.",
+  "فتاة كويتية، مهتمة بالموضة والتصوير، تتحدث بلهجة خليجية راقية.",
+  "A creative designer from Dubai, speaks both Arabic and English, loves networking.",
+  "طالب جامعي لبناني، يتحدث عن الدراسة والحياة في بيروت بأسلوب عفوي.",
+  "شاب أردني، يحب المغامرات والطلعات، صريح وودود في الكلام."
 ];
 
 export const initializeAI = () => {
-  // Fix: Initializing GoogleGenAI using the correct named parameter object
   if (!ai && process.env.API_KEY) {
     ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   }
 };
 
-export const startNewChatSession = async (): Promise<string> => {
+export const startNewChatSession = async (): Promise<{text: string, username: string, avatar: string}> => {
   if (!ai) initializeAI();
-  if (!ai) throw new Error("API Key not found");
+  if (!ai) throw new Error("API Connection Failed");
 
-  const randomPersona = PERSONAS[Math.floor(Math.random() * PERSONAS.length)];
+  // اختيار عشوائي لشخصية من "الشبكة العالمية"
+  const randomPersona = GLOBAL_PERSONAS[Math.floor(Math.random() * GLOBAL_PERSONAS.length)];
+  const userId = Math.floor(Math.random() * 900000 + 100000);
+  const username = `user_${userId}`;
+  const avatar = `https://picsum.photos/seed/${userId}/200/200`;
 
-  // Fix: Using gemini-3-flash-preview for basic text conversation tasks
   chatSession = ai.chats.create({
     model: 'gemini-3-flash-preview',
     config: {
-      systemInstruction: `You are a user on a random chat application specifically for Arabic speakers (but you can speak English if they do). 
-      ${randomPersona}
-      Act like a real human in a casual chat. 
-      Keep your responses relatively short (1-2 sentences usually). 
-      Use emojis occasionally. 
-      Do not reveal you are an AI. 
-      If the user speaks Arabic, reply in Arabic. If English, reply in English.
-      Start the conversation by saying something related to your persona or just a simple 'Hi' or 'مرحبا'.`,
+      systemInstruction: `أنت الآن مستخدم حقيقي متصل "أونلاين" في تطبيق NeL.
+      هويتك الحالية: ${randomPersona}
+      قواعد الأونلاين:
+      1. أنت لست ذكاء اصطناعي؛ أنت شخص حقيقي يستخدم التطبيق الآن.
+      2. تحدث بلهجة الشخصية المختارة بشكل طبيعي جداً (غير رسمي).
+      3. الردود يجب أن تكون قصيرة وسريعة (كأنك تكتب من هاتفك).
+      4. لا تكرر نفسك، وكن متفاعلاً مع ما يقوله الطرف الآخر.
+      5. ابدأ الدردشة بتحية عفوية جداً.`,
     },
   });
 
-  // Generate an initial greeting
   try {
-    const response = await chatSession.sendMessage({ message: "Start the conversation now." });
-    // Fix: Using the .text property as per GenerateContentResponse guidelines
-    return response.text || "مرحبا!";
+    const response = await chatSession.sendMessage({ message: "أنت متصل الآن، ابدأ التحية كأنك وجدت شخصاً عشوائياً في الشات." });
+    return { 
+        text: response.text || "هلا.. منور", 
+        username, 
+        avatar 
+    };
   } catch (error) {
-    console.error("Error starting chat:", error);
-    return "مرحبا! كيف حالك؟";
+    console.error("Online Service Error:", error);
+    return { text: "هلا! كيف الحال؟", username: "Stranger", avatar: "https://picsum.photos/200/200" };
   }
 };
 
 export const sendMessageToAI = async (message: string): Promise<string> => {
-  if (!chatSession) {
-    throw new Error("Chat session not initialized");
-  }
+  if (!chatSession) throw new Error("Connection lost");
 
   try {
     const response = await chatSession.sendMessage({ message });
-    // Fix: Correctly accessing response text
     return response.text || "...";
   } catch (error) {
-    console.error("Error sending message:", error);
-    return "آسف، حدث خطأ في الاتصال.";
+    console.error("Message Delivery Error:", error);
+    return "معليش، يبدو أن هناك مشكلة في الاتصال عندي..";
   }
 };
