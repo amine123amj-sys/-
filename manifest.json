@@ -3,7 +3,7 @@
   "name": "NeL Online",
   "short_name": "NeL",
   "description": "تطبيق الدردشة العشوائية العالمي بنظام إنستقرام",
-  "start_url": "/",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",

@@ -1,8 +1,9 @@
 
 const CACHE_NAME = 'nel-v1-production';
 const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
+  './',
+  './index.html',
+  './manifest.json',
   'https://cdn.tailwindcss.com',
   'https://fonts.googleapis.com/css2?family=Grand+Hotel&family=Noto+Sans+Arabic:wght@300;400;500;700&display=swap'
 ];
@@ -26,13 +27,11 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // استراتيجية النشر: حاول من الكاش أولاً، إذا لم يوجد، اذهب للشبكة
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) return cachedResponse;
       return fetch(event.request).then((response) => {
-        // لا تقم بتخزين طلبات الـ API الخاصة بـ Gemini في الكاش
-        if (!event.request.url.includes('generativelanguage')) {
+        if (event.request.url.startsWith('http') && !event.request.url.includes('generativelanguage')) {
           const responseToCache = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
         }

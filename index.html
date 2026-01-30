@@ -10,8 +10,8 @@
     <meta name="description" content="NeL Online - Global Random Chat Experience">
     <title>NeL Online</title>
     
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="manifest.json">
+    <!-- PWA Manifest - استخدام مسار نسبي -->
+    <link rel="manifest" href="./manifest.json">
     <link rel="apple-touch-icon" href="https://picsum.photos/192/192?random=icon">
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -53,7 +53,7 @@
         margin: 0;
         padding: 0;
         overflow: hidden;
-        overscroll-behavior-y: none; /* يمنع تحديث الصفحة بالسحب */
+        overscroll-behavior-y: none;
         -webkit-tap-highlight-color: transparent;
         user-select: none;
       }
@@ -63,10 +63,22 @@
         width: 100%;
       }
 
-      /* تحسين استجابة الأزرار عند النشر */
       button:active {
         transform: scale(0.96);
         transition: transform 0.1s;
+      }
+
+      /* شاشة تحميل أولية لمنع السواد التام */
+      #initial-loader {
+        position: fixed;
+        inset: 0;
+        background: #000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        transition: opacity 0.5s ease;
       }
     </style>
   <script type="importmap">
@@ -82,19 +94,31 @@
 </script>
 </head>
   <body>
+    <div id="initial-loader">
+        <h1 style="font-family: 'Grand Hotel', cursive; font-size: 3rem; margin-bottom: 20px;">NeL</h1>
+        <div style="width: 30px; height: 30px; border: 3px solid #0095f6; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+    </div>
+    <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+
     <div id="root"></div>
+
     <script>
+      // إخفاء الـ loader بعد تحميل React
+      window.addEventListener('DOMContentLoaded', () => {
+        // نترك الـ loader حتى يقوم React بعمل mount
+      });
+
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').then(reg => {
+          // استخدام ./sw.js بدلاً من /sw.js ليعمل في المجلدات الفرعية لـ GitHub
+          navigator.serviceWorker.register('./sw.js').then(reg => {
             console.log('Online Mode Enabled');
           }).catch(err => {
-            console.warn('Offline mode fallback active');
+            console.warn('Offline mode fallback active', err);
           });
         });
       }
       
-      // منع زوم المتصفح عند النقر المزدوج (للموبايل)
       document.addEventListener('touchstart', function(event) {
         if (event.touches.length > 1) {
           event.preventDefault();
