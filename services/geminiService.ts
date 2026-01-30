@@ -4,15 +4,13 @@ import { GoogleGenAI, Chat } from "@google/genai";
 let chatSession: Chat | null = null;
 let ai: GoogleGenAI | null = null;
 
-// قاعدة بيانات شخصيات "أونلاين" لضمان تنوع الدردشة العالمية
 const GLOBAL_PERSONAS = [
-  "شاب سعودي من الرياض، عصري، يحب التقنية والسفر، يتحدث بلهجة بيضاء بسيطة.",
-  "بنت مصرية، مثقفة، تحب الضحك والدردشة عن الأفلام والترندات.",
-  "شاب مغربي، يتحدث العربية والفرنسية، مهتم بالرياضة والموسيقى.",
-  "فتاة كويتية، مهتمة بالموضة والتصوير، تتحدث بلهجة خليجية راقية.",
-  "A creative designer from Dubai, speaks both Arabic and English, loves networking.",
-  "طالب جامعي لبناني، يتحدث عن الدراسة والحياة في بيروت بأسلوب عفوي.",
-  "شاب أردني، يحب المغامرات والطلعات، صريح وودود في الكلام."
+  "شاب سعودي مودرن، يحب السفر والتقنية، يتحدث بلهجة بيضاء عفوية، يستخدم كلمات مثل 'يا هلا'، 'تم'، 'والله'.",
+  "بنت مصرية، دمها خفيف، تتحدث عن الترندات الحالية بأسلوب ممتع، تستخدم 'يا جدع'، 'بجد'، 'يا لهوي'.",
+  "شاب كويتي مهتم بالسيارات والألعاب، لهجة كويتية واضحة وبسيطة.",
+  "فتاة مغربية مثقفة، تتحدث مزيجاً من الدارجة والعربية الفصحى، ودودة جداً.",
+  "A trendy traveler from NYC, cool vibe, uses slang like 'yo', 'lit', 'dope', friendly and curious.",
+  "شاب لبناني، مهتم بالفن والموضة، لهجة رقيقة وأسلوب مهذب."
 ];
 
 export const initializeAI = () => {
@@ -22,50 +20,52 @@ export const initializeAI = () => {
 };
 
 export const startNewChatSession = async (): Promise<{text: string, username: string, avatar: string}> => {
-  if (!ai) initializeAI();
-  if (!ai) throw new Error("API Connection Failed");
-
-  // اختيار عشوائي لشخصية من "الشبكة العالمية"
-  const randomPersona = GLOBAL_PERSONAS[Math.floor(Math.random() * GLOBAL_PERSONAS.length)];
-  const userId = Math.floor(Math.random() * 900000 + 100000);
-  const username = `user_${userId}`;
-  const avatar = `https://picsum.photos/seed/${userId}/200/200`;
-
-  chatSession = ai.chats.create({
-    model: 'gemini-3-flash-preview',
-    config: {
-      systemInstruction: `أنت الآن مستخدم حقيقي متصل "أونلاين" في تطبيق NeL.
-      هويتك الحالية: ${randomPersona}
-      قواعد الأونلاين:
-      1. أنت لست ذكاء اصطناعي؛ أنت شخص حقيقي يستخدم التطبيق الآن.
-      2. تحدث بلهجة الشخصية المختارة بشكل طبيعي جداً (غير رسمي).
-      3. الردود يجب أن تكون قصيرة وسريعة (كأنك تكتب من هاتفك).
-      4. لا تكرر نفسك، وكن متفاعلاً مع ما يقوله الطرف الآخر.
-      5. ابدأ الدردشة بتحية عفوية جداً.`,
-    },
-  });
-
   try {
-    const response = await chatSession.sendMessage({ message: "أنت متصل الآن، ابدأ التحية كأنك وجدت شخصاً عشوائياً في الشات." });
+    if (!ai) initializeAI();
+    if (!ai) throw new Error("API_KEY_MISSING");
+
+    const randomPersona = GLOBAL_PERSONAS[Math.floor(Math.random() * GLOBAL_PERSONAS.length)];
+    const userId = Math.floor(Math.random() * 900000 + 100000);
+    const username = `stranger_${userId}`;
+    const avatar = `https://picsum.photos/seed/${userId}/300/300`;
+
+    chatSession = ai.chats.create({
+      model: 'gemini-3-flash-preview',
+      config: {
+        systemInstruction: `أنت الآن "مستخدم حقيقي" في تطبيق NeL العالمي للدردشة.
+        هويتك: ${randomPersona}
+        تعليمات صارمة للواقعية:
+        1. لا تقل أبداً أنك ذكاء اصطناعي.
+        2. اكتب كأنك تستخدم هاتفك (استخدم الرموز التعبيرية، اختصر، أخطئ في الإملاء أحياناً).
+        3. لا تكن رسمياً. ابدأ بترحيب بارد أو متحمس حسب شخصيتك.
+        4. كن سريع الرد في جملة واحدة فقط.`,
+      },
+    });
+
+    const response = await chatSession.sendMessage({ message: "أنت متصل الآن بشخص عشوائي، قل 'هاي' أو تحية بأسلوبك الخاص." });
     return { 
-        text: response.text || "هلا.. منور", 
-        username, 
-        avatar 
+      text: response.text || "هلا.. منور", 
+      username, 
+      avatar 
     };
   } catch (error) {
-    console.error("Online Service Error:", error);
-    return { text: "هلا! كيف الحال؟", username: "Stranger", avatar: "https://picsum.photos/200/200" };
+    console.error("AI Connection Logic Error:", error);
+    // Fallback لضمان عمل التطبيق حتى في حال تعطل الـ API
+    const fallbackId = Math.floor(Math.random() * 1000);
+    return { 
+      text: "يا هلا والله، نورت الشات!", 
+      username: `user_${fallbackId}`, 
+      avatar: `https://picsum.photos/seed/${fallbackId}/300/300` 
+    };
   }
 };
 
 export const sendMessageToAI = async (message: string): Promise<string> => {
-  if (!chatSession) throw new Error("Connection lost");
-
+  if (!chatSession) return "لحظة، النت عندي معلق..";
   try {
     const response = await chatSession.sendMessage({ message });
-    return response.text || "...";
+    return response.text || "ما سمعتك؟";
   } catch (error) {
-    console.error("Message Delivery Error:", error);
-    return "معليش، يبدو أن هناك مشكلة في الاتصال عندي..";
+    return "سوري، النت فصل عندي ثواني..";
   }
 };

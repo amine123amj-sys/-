@@ -3,10 +3,11 @@
 <html lang="ar" dir="rtl" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#000000">
+    <meta name="description" content="NeL Online - Global Random Chat Experience">
     <title>NeL Online</title>
     
     <!-- PWA Manifest -->
@@ -44,11 +45,28 @@
     <style>
       .no-scrollbar::-webkit-scrollbar { display: none; }
       .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      body {
+      
+      html, body {
         background-color: #000;
         color: #fff;
-        overscroll-behavior-y: contain;
-        user-select: none; /* يمنع التحديد ليشعرك أنه تطبيق حقيقي */
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        overscroll-behavior-y: none; /* يمنع تحديث الصفحة بالسحب */
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+      }
+
+      #root {
+        height: 100%;
+        width: 100%;
+      }
+
+      /* تحسين استجابة الأزرار عند النشر */
+      button:active {
+        transform: scale(0.96);
+        transition: transform 0.1s;
       }
     </style>
   <script type="importmap">
@@ -69,12 +87,19 @@
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js').then(reg => {
-            console.log('Online Service Ready');
+            console.log('Online Mode Enabled');
           }).catch(err => {
-            console.log('Offline support failed', err);
+            console.warn('Offline mode fallback active');
           });
         });
       }
+      
+      // منع زوم المتصفح عند النقر المزدوج (للموبايل)
+      document.addEventListener('touchstart', function(event) {
+        if (event.touches.length > 1) {
+          event.preventDefault();
+        }
+      }, { passive: false });
     </script>
   </body>
 </html>
